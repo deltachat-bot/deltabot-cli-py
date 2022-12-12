@@ -38,7 +38,7 @@ async def on_init(bot, args):
 
 
 @cli.on_start
-async def on_start(bot):
+async def on_start(bot, args):
     logging.info("Running bot...")
 
 

@@ -49,15 +49,15 @@ class BotCli:
         for func in self._init_hooks:
             await func(bot, args)
 
-    def on_start(self, func: Callable[[Bot], Coroutine]) -> Callable:
+    def on_start(self, func: Callable[[Bot], Coroutine], args: Namespace) -> Callable:
         """Register function to be called when the bot is about to start serving requests.
 
         The function will receive the bot instance.
         """
-        self._start_hooks.add(func)
+        self._start_hooks.add(func, args)
         return func
 
-    async def _on_start(self, bot: Bot) -> None:
+    async def _on_start(self, bot: Bot, args: Namespace) -> None:
         for func in self._start_hooks:
             await func(bot)
 
@@ -138,7 +138,7 @@ class BotCli:
                 await args.cmd(bot, args)
             else:
                 if await bot.is_configured():
-                    await self._on_start(bot)
+                    await self._on_start(bot, args)
                     await bot.run_forever()
                 else:
                     logging.error("Account is not configured")
