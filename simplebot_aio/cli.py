@@ -2,8 +2,9 @@
 import asyncio
 import logging
 import os
+import sys
 from argparse import ArgumentParser, Namespace
-from typing import Callable, Coroutine, Set, Union
+from typing import Callable, Coroutine, Optional, Set, Union
 
 from appdirs import user_config_dir
 from deltachat_rpc_client import AttrDict, Bot, DeltaChat, EventType, Rpc, events
@@ -21,8 +22,11 @@ class BotCli:
     Start running the bot with `start()`.
     """
 
-    def __init__(self, app_name: str) -> None:
-        self.app_name = app_name
+    def __init__(self, app_name: Optional[str] = None) -> None:
+        if app_name:
+            self.app_name = app_name
+        else:
+            self.app_name = sys.argv[0]
         self._parser = ArgumentParser(app_name)
         self._subparsers = self._parser.add_subparsers(title="subcommands")
         self._hooks = events.HookCollection()
