@@ -31,7 +31,7 @@ class BotCli:
         self._subparsers = self._parser.add_subparsers(title="subcommands")
         self._hooks = events.HookCollection()
         self._init_hooks: Set[Callable[[Bot, Namespace], Coroutine]] = set()
-        self._start_hooks: Set[Callable[[Bot], Coroutine]] = set()
+        self._start_hooks: Set[Callable[[Bot, Namespace], Coroutine]] = set()
 
     def on(self, event: Union[type, events.EventFilter]) -> Callable:  # noqa
         """Register decorated function as listener for the given event."""
@@ -49,17 +49,17 @@ class BotCli:
         for func in self._init_hooks:
             await func(bot, args)
 
-    def on_start(self, func: Callable[[Bot], Coroutine], args: Namespace) -> Callable:
+    def on_start(self, func: Callable[[Bot, Namespace], Coroutine]) -> Callable:
         """Register function to be called when the bot is about to start serving requests.
 
         The function will receive the bot instance.
         """
-        self._start_hooks.add(func, args)
+        self._start_hooks.add(func)
         return func
 
     async def _on_start(self, bot: Bot, args: Namespace) -> None:
         for func in self._start_hooks:
-            await func(bot)
+            await func(bot, args)
 
     def add_generic_option(self, *flags, **kwargs) -> None:
         """Add a generic argument option to the CLI."""
