@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simplebot-aio"
+description = "Asynchronous library to help with Delta Chat bot development"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {file = "LICENSE.txt"}
+keywords = ["deltachat", "bot", "simplebot"]
+authors = [
+  {email = "adbenitez@hispanilandia.net"},
+  {name = "adbenitez"}
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python :: 3",
+  "Intended Audience :: Developers",
+]
+dynamic = [
+    "version"
+]
+dependencies = [
+    "deltachat_rpc_client",
+    "appdirs>=1.4.4",
+    "rich>=12.6.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "black",
+  "mypy",
+  "isort",
+  "pylint",
+  "pylama",
+  "pytest",
+]
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+ignore_missing_imports = "True"
