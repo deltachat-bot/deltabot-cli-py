@@ -22,11 +22,8 @@ class BotCli:
     Start running the bot with `start()`.
     """
 
-    def __init__(self, app_name: Optional[str] = None) -> None:
-        if app_name:
-            self.app_name = app_name
-        else:
-            self.app_name = sys.argv[0]
+    def __init__(self, app_name: str) -> None:
+        self.app_name = app_name
         self._parser = ArgumentParser(app_name)
         self._subparsers = self._parser.add_subparsers(title="subcommands")
         self._hooks = events.HookCollection()
@@ -117,12 +114,12 @@ class BotCli:
         """Start running the bot and processing incoming messages."""
         await self.init_parser()
         args = self._parser.parse_args()
-        accounts_dir = await self.get_accounts_dir(args)
         logging.basicConfig(
             level=logging.INFO,
             format="%(message)s",
             handlers=[RichHandler(show_path=False)],
         )
+        accounts_dir = await self.get_accounts_dir(args)
 
         async with Rpc(accounts_dir=accounts_dir) as rpc:
             deltachat = DeltaChat(rpc)
