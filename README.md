@@ -42,6 +42,6 @@ if __name__ == "__main__":
 If you run the above script you will have a bot CLI, that allows to configure and run a bot.
 A progress bar is displayed while the bot is configuring, and logs are pretty-printed.
 
-For more examples check the examples folder.
+For more examples check the [examples](https://github.com/simplebot-org/simplebot-aio/tree/master/examples) folder.
 
 **Note:** simplebot-aio uses [deltachat-rpc-client](https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-client) library, check its documentation and examples to better understand how to use simplebot-aio.
