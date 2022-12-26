@@ -36,6 +36,9 @@ test = [
   "pylama",
   "pytest",
 ]
+qr = [
+   "qrcode",
+]
 
 [tool.isort]
 profile = "black"

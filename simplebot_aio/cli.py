@@ -104,6 +104,8 @@ class BotCli:
         avatar_parser = self.add_subcommand(_set_avatar_cmd, name="set_avatar")
         avatar_parser.add_argument("path", help="path to avatar image", nargs="?")
 
+        self.add_subcommand(_qr_cmd, name="qr")
+
     async def get_accounts_dir(self, args: Namespace) -> str:
         """Get bot's account folder."""
         if not os.path.exists(args.config_dir):
@@ -193,3 +195,17 @@ async def _set_avatar_cmd(bot: Bot, args: Namespace) -> None:
         logging.info("Avatar updated.")
     else:
         logging.info("Avatar removed.")
+
+
+async def _qr_cmd(bot: Bot, _args: Namespace) -> None:
+    """get bot's verification QR"""
+    qrdata, _ = await bot.account.get_qr_code()
+    try:
+        import qrcode
+
+        qr = qrcode.QRCode()
+        qr.add_data(qrdata)
+        qr.print_ascii(invert=True)
+    except ModuleNotFoundError:
+        print("QR data:")
+    print(qrdata)
