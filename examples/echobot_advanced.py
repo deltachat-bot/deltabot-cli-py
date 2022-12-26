@@ -14,31 +14,22 @@ async def log_event(event):
         logging.info(event.msg)
     elif event.type == EventType.WARNING:
         logging.warning(event.msg)
+    elif event.type == EventType.ERROR:
+        logging.error(event.msg)
 
 
-@cli.on(events.RawEvent(EventType.ERROR))
-async def log_error(event):
-    logging.error(event.msg)
-
-
-@cli.on(events.NewMessage(func=lambda e: not e.command))
+@cli.on(events.NewMessage)
 async def echo(event):
-    if event.text or event.file:
-        await event.chat.send_message(text=event.text, file=event.file)
-
-
-@cli.on(events.NewMessage(command="/help"))
-async def help_command(event):
-    await event.chat.send_text("Send me any message and I will echo it back")
+    await event.chat.send_text(event.text)
 
 
 @cli.on_init
-async def on_init(bot, args):
+async def on_init(_bot, args):
     logging.info("Initializing bot with args: %s", args)
 
 
 @cli.on_start
-async def on_start(bot, args):
+async def on_start(_bot, _args):
     logging.info("Running bot...")
 
 

@@ -2,9 +2,8 @@
 import asyncio
 import logging
 import os
-import sys
 from argparse import ArgumentParser, Namespace
-from typing import Callable, Coroutine, Optional, Set, Union
+from typing import Callable, Coroutine, Set, Union
 
 from appdirs import user_config_dir
 from deltachat_rpc_client import AttrDict, Bot, DeltaChat, EventType, Rpc, events
@@ -201,11 +200,11 @@ async def _qr_cmd(bot: Bot, _args: Namespace) -> None:
     """get bot's verification QR"""
     qrdata, _ = await bot.account.get_qr_code()
     try:
-        import qrcode
+        import qrcode  # noqa
 
-        qr = qrcode.QRCode()
-        qr.add_data(qrdata)
-        qr.print_ascii(invert=True)
+        qrcode = qrcode.QRCode()
+        qrcode.add_data(qrdata)
+        qrcode.print_ascii(invert=True)
     except ModuleNotFoundError:
         print("QR data:")
     print(qrdata)
