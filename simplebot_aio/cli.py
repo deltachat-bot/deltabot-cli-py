@@ -5,6 +5,7 @@ import os
 from argparse import ArgumentParser, Namespace
 from typing import Callable, Coroutine, Set, Union
 
+import qrcode
 from appdirs import user_config_dir
 from deltachat_rpc_client import AttrDict, Bot, DeltaChat, EventType, Rpc, events
 from deltachat_rpc_client.rpc import JsonRpcError
@@ -199,12 +200,7 @@ async def _set_avatar_cmd(bot: Bot, args: Namespace) -> None:
 async def _qr_cmd(bot: Bot, _args: Namespace) -> None:
     """get bot's verification QR"""
     qrdata, _ = await bot.account.get_qr_code()
-    try:
-        import qrcode  # noqa
-
-        qrcode = qrcode.QRCode()
-        qrcode.add_data(qrdata)
-        qrcode.print_ascii(invert=True)
-    except ModuleNotFoundError:
-        print("QR data:")
+    qrcode = qrcode.QRCode()
+    qrcode.add_data(qrdata)
+    qrcode.print_ascii(invert=True)
     print(qrdata)

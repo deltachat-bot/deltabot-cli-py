@@ -25,6 +25,7 @@ dependencies = [
     "deltachat_rpc_client",
     "appdirs>=1.4.4",
     "rich>=12.6.0",
+    "qrcode",
 ]
 
 [project.optional-dependencies]
@@ -35,9 +36,6 @@ test = [
   "pylint",
   "pylama",
   "pytest",
-]
-qr = [
-   "qrcode",
 ]
 
 [tool.isort]
