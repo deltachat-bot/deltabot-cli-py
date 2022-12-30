@@ -22,7 +22,7 @@ dynamic = [
     "version"
 ]
 dependencies = [
-    "git+https://github.com/deltachat/deltachat-core-rust.git#subdirectory=deltachat-rpc-client",
+    "deltachat-rpc-client @ git+https://github.com/deltachat/deltachat-core-rust.git#subdirectory=deltachat-rpc-client",
     "appdirs>=1.4.4",
     "rich>=12.6.0",
     "qrcode",
