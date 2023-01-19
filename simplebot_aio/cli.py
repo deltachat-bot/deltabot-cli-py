@@ -200,7 +200,7 @@ async def _set_avatar_cmd(bot: Bot, args: Namespace) -> None:
 async def _qr_cmd(bot: Bot, _args: Namespace) -> None:
     """get bot's verification QR"""
     qrdata, _ = await bot.account.get_qr_code()
-    qrcode = qrcode.QRCode()
-    qrcode.add_data(qrdata)
-    qrcode.print_ascii(invert=True)
+    code = qrcode.QRCode()
+    code.add_data(qrdata)
+    code.print_ascii(invert=True)
     print(qrdata)
