@@ -62,7 +62,7 @@ class BotCli:
     def is_not_known_command(self, event: AttrDict) -> bool:
         if not event.command.startswith(const.COMMAND_PREFIX):
             return True
-        for hook in self._bot._hooks.get(events.NewMessage, []):
+        for hook in self._bot._hooks.get(events.NewMessage, []):  # pylint:disable=W0212
             if event.command == hook[1].command:
                 return False
         return True
