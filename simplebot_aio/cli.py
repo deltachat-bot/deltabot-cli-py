@@ -7,7 +7,7 @@ from typing import Callable, Coroutine, Set, Union
 
 import qrcode
 from appdirs import user_config_dir
-from deltachat_rpc_client import AttrDict, Bot, DeltaChat, EventType, Rpc, events
+from deltachat_rpc_client import AttrDict, Bot, DeltaChat, EventType, Rpc, const, events
 from deltachat_rpc_client.rpc import JsonRpcError
 from rich.logging import RichHandler
 
@@ -29,6 +29,7 @@ class BotCli:
         self._hooks = events.HookCollection()
         self._init_hooks: Set[Callable[[Bot, Namespace], Coroutine]] = set()
         self._start_hooks: Set[Callable[[Bot, Namespace], Coroutine]] = set()
+        self._bot: Bot
 
     def on(self, event: Union[type, events.EventFilter]) -> Callable:  # noqa
         """Register decorated function as listener for the given event."""
@@ -57,6 +58,14 @@ class BotCli:
     async def _on_start(self, bot: Bot, args: Namespace) -> None:
         for func in self._start_hooks:
             await func(bot, args)
+
+    def is_not_known_command(self, event: AttrDict) -> bool:
+        if not event.command.startswith(const.COMMAND_PREFIX):
+            return True
+        for hook in self._bot._hooks.get(events.NewMessage, []):
+            if event.command == hook[1].command:
+                return False
+        return True
 
     def add_generic_option(self, *flags, **kwargs) -> None:
         """Add a generic argument option to the CLI."""
@@ -128,17 +137,17 @@ class BotCli:
             accounts = await deltachat.get_all_accounts()
             account = accounts[0] if accounts else await deltachat.add_account()
 
-            bot = Bot(account, self._hooks)
-            await self._on_init(bot, args)
+            self._bot = Bot(account, self._hooks)
+            await self._on_init(self._bot, args)
 
             core_version = (await deltachat.get_system_info()).deltachat_core_version
-            bot.logger.debug("Running deltachat core %s", core_version)
+            self._bot.logger.debug("Running deltachat core %s", core_version)
             if "cmd" in args:
-                await args.cmd(bot, args)
+                await args.cmd(self._bot, args)
             else:
-                if await bot.is_configured():
-                    await self._on_start(bot, args)
-                    await bot.run_forever()
+                if await self._bot.is_configured():
+                    await self._on_start(self._bot, args)
+                    await self._bot.run_forever()
                 else:
                     logging.error("Account is not configured")
 
