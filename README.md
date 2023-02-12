@@ -1,26 +1,26 @@
-# simplebot-aio
+# deltabot-cli
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-Asynchronous library to help with Delta Chat bot development.
+Asynchronous library to speedup Delta Chat bot development.
 
-With simplebot-aio you can focus on writing your event processing logic and let simplebot-aio handle
+With deltabot-cli you can focus on writing your event processing logic and let deltabot-cli handle
 for you the repetitive process of creating the bot CLI.
 
 ## Install
 
 ```sh
-pip install simplebot-aio
+pip install git+https://github.com/deltachat-bot/deltabot-cli.git
 ```
 
 ## Example
 
-Example echo-bot written with simplebot-aio:
+Example echo-bot written with deltabot-cli:
 
 ```python
 import asyncio
 import logging
-from simplebot_aio import BotCli, events
+from deltabot_cli import BotCli, events
 
 cli = BotCli("echobot")
 
@@ -42,6 +42,6 @@ if __name__ == "__main__":
 If you run the above script you will have a bot CLI, that allows to configure and run a bot.
 A progress bar is displayed while the bot is configuring, and logs are pretty-printed.
 
-For more examples check the [examples](https://github.com/simplebot-org/simplebot-aio/tree/master/examples) folder.
+For more examples check the [examples](https://github.com/deltachat-bot/deltabot-cli/tree/master/examples) folder.
 
-**Note:** simplebot-aio uses [deltachat-rpc-client](https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-client) library, check its documentation and examples to better understand how to use simplebot-aio.
+**Note:** deltabot-cli uses [deltachat-rpc-client](https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-client) library, check its documentation and examples to better understand how to use deltabot-cli.

@@ -4,7 +4,7 @@
 import asyncio
 import logging
 
-from simplebot_aio import BotCli, events
+from deltabot_cli import BotCli, events
 
 cli = BotCli("echobot")
 
