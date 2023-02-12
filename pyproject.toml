@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deltabot-cli"
-description = "Asynchronous library to help with Delta Chat bot development"
+description = "Asynchronous library to speedup Delta Chat bot development"
 readme = "README.md"
 requires-python = ">=3.7"
 license = {file = "LICENSE.txt"}
