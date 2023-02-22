@@ -19,7 +19,7 @@ This package depends on a standalone Delta Chat RPC server `deltachat-rpc-server
 available in your `PATH`. To install it check:
 https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server
 
-## Example
+## Usage
 
 Example echo-bot written with deltabot-cli:
 
