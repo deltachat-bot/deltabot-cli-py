@@ -22,8 +22,9 @@ class BotCli:
     Start running the bot with `start()`.
     """
 
-    def __init__(self, app_name: str) -> None:
+    def __init__(self, app_name: str, log_level=logging.INFO) -> None:
         self.app_name = app_name
+        self.log_level = log_level
         self._parser = ArgumentParser(app_name)
         self._subparsers = self._parser.add_subparsers(title="subcommands")
         self._hooks = events.HookCollection()
@@ -126,7 +127,7 @@ class BotCli:
         await self.init_parser()
         args = self._parser.parse_args()
         logging.basicConfig(
-            level=logging.INFO,
+            level=self.log_level,
             format="%(message)s",
             handlers=[RichHandler(show_path=False)],
         )
