@@ -20,7 +20,8 @@ async def log_event(event):
 
 @cli.on(events.NewMessage)
 async def echo(event):
-    await event.chat.send_text(event.message_snapshot.text)
+    msg = event.message_snapshot
+    await msg.chat.send_text(msg.text)
 
 
 @cli.on_init
