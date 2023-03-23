@@ -111,9 +111,7 @@ class BotCli:
         config_parser.add_argument("option", help="option name", nargs="?")
         config_parser.add_argument("value", help="option value to set", nargs="?")
 
-        avatar_parser = self.add_subcommand(_set_avatar_cmd, name="set_avatar")
-        avatar_parser.add_argument("path", help="path to avatar image", nargs="?")
-
+        self.add_subcommand(self._serve_cmd, name="serve")
         self.add_subcommand(_qr_cmd, name="qr")
 
     async def get_accounts_dir(self, args: Namespace) -> str:
@@ -146,11 +144,15 @@ class BotCli:
             if "cmd" in args:
                 await args.cmd(self._bot, args)
             else:
-                if await self._bot.is_configured():
-                    await self._on_start(self._bot, args)
-                    await self._bot.run_forever()
-                else:
-                    logging.error("Account is not configured")
+                self._parser.parse_args(["-h"])
+
+    async def _serve_cmd(self, bot: Bot, args: Namespace) -> None:
+        """start processing messages"""
+        if await bot.is_configured():
+            await self._on_start(bot, args)
+            await bot.run_forever()
+        else:
+            logging.error("Account is not configured")
 
 
 async def _init_cmd(bot: Bot, args: Namespace) -> None:
@@ -196,15 +198,6 @@ async def _config_cmd(bot: Bot, args: Namespace) -> None:
         for key in keys.split():
             value = await bot.account.get_config(key)
             print(f"{key}={value!r}")
-
-
-async def _set_avatar_cmd(bot: Bot, args: Namespace) -> None:
-    """set account avatar"""
-    await bot.account.set_avatar(args.path)
-    if args.path:
-        logging.info("Avatar updated.")
-    else:
-        logging.info("Avatar removed.")
 
 
 async def _qr_cmd(bot: Bot, _args: Namespace) -> None:
