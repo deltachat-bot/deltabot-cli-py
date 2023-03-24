@@ -161,7 +161,12 @@ class BotCli:
         """start processing messages"""
         if await bot.is_configured():
             await self._on_start(bot, args)
-            await bot.run_forever()
+            while True:
+                try:
+                    await bot.run_forever()
+                except Exception as ex:  # pylint:disable=W0703
+                    logging.exception(ex)
+                    await asyncio.sleep(5)
         else:
             logging.error("Account is not configured")
 
