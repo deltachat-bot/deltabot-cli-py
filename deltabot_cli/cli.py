@@ -151,7 +151,7 @@ class BotCli:
             await self._on_init(self._bot, args)
 
             core_version = (await deltachat.get_system_info()).deltachat_core_version
-            self._bot.logger.debug("Running deltachat core %s", core_version)
+            self._bot.logger.info("Running deltachat core %s", core_version)
             if "cmd" in args:
                 await args.cmd(self._bot, args)
             else:
