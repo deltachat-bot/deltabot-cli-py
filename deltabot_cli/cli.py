@@ -3,7 +3,7 @@ import asyncio
 import logging
 import os
 from argparse import ArgumentParser, Namespace
-from typing import Callable, Coroutine, Set, Union
+from typing import Callable, Coroutine, Optional, Set, Union
 
 import qrcode
 from appdirs import user_config_dir
@@ -87,6 +87,17 @@ class BotCli:
         subparser = self._subparsers.add_parser(**kwargs)
         subparser.set_defaults(cmd=func)
         return subparser
+
+    async def set_custom_config(self, key: str, value: str) -> None:
+        """set a custom configuration value.
+
+        This is useful to set custom settings for your application.
+        """
+        await self._bot.account.set_config(f"ui.{self.app_name}.{key}", value)
+
+    async def get_custom_config(self, key: str) -> Optional[str]:
+        """get custom a configuration value"""
+        return await self._bot.account.get_config(f"ui.{self.app_name}.{key}")
 
     async def init_parser(self) -> None:
         """Add some default options and subcommands.
