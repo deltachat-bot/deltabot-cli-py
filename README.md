@@ -24,7 +24,6 @@ https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-serve
 Example echo-bot written with deltabot-cli:
 
 ```python
-import asyncio
 import logging
 from deltabot_cli import BotCli, events
 
@@ -32,17 +31,17 @@ cli = BotCli("echobot")
 
 
 @cli.on(events.RawEvent)
-async def log_event(event):
+def log_event(event):
     logging.info(event)
 
 
 @cli.on(events.NewMessage)
-async def echo(event):
-    await event.chat.send_text(event.text)
+def echo(event):
+    event.chat.send_text(event.text)
 
 
 if __name__ == "__main__":
-    asyncio.run(cli.start())
+    cli.start()
 ```
 
 If you run the above script you will have a bot CLI, that allows to configure and run a bot.
