@@ -165,6 +165,8 @@ class BotCli:
             while True:
                 try:
                     bot.run_forever()
+                except KeyboardInterrupt:
+                    return
                 except Exception as ex:  # pylint:disable=W0703
                     logging.exception(ex)
                     time.sleep(5)
