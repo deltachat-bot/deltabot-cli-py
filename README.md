@@ -2,7 +2,7 @@
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-Asynchronous library to speedup Delta Chat bot development.
+Library to speedup Delta Chat bot development.
 
 With this library you can focus on writing your event/message processing logic and let us handle the repetitive
 process of creating the bot CLI.
