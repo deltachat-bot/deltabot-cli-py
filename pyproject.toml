@@ -1,8 +1,10 @@
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
-build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools>=60",
+    "setuptools-scm>=8.0"]
 
 [project]
+dynamic = ["version"]
 name = "deltabot-cli"
 description = "Library to speedup Delta Chat bot development"
 readme = "README.md"
@@ -17,9 +19,6 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python :: 3",
   "Intended Audience :: Developers",
-]
-dynamic = [
-    "version"
 ]
 dependencies = [
     "deltachat-rpc-client>=1.125.0",
