@@ -1,10 +1,9 @@
 [build-system]
-requires = [
-    "setuptools>=60",
-    "setuptools-scm>=8.0"]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
 [project]
-dynamic = ["version"]
+version = "0.1.0"
 name = "deltabot-cli"
 description = "Library to speedup Delta Chat bot development"
 readme = "README.md"
