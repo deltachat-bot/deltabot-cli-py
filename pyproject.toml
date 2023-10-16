@@ -11,8 +11,7 @@ requires-python = ">=3.7"
 license = {file = "LICENSE.txt"}
 keywords = ["deltachat", "bot", "deltabot-cli"]
 authors = [
-  {email = "adbenitez@hispanilandia.net"},
-  {name = "adbenitez"}
+  {name = "adbenitez", email = "adbenitez@hispanilandia.net"},
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
