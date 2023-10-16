@@ -11,13 +11,13 @@ process of creating the bot CLI.
 ## Install
 
 ```sh
-pip install git+https://github.com/deltachat-bot/deltabot-cli-py.git
+pip install deltabot-cli-py
 ```
 
 ### Installing deltachat-rpc-server
 
-This package depends on a standalone Delta Chat RPC server `deltachat-rpc-server` program that must be
-available in your `PATH`. To install it check:
+This package depends on a standalone Delta Chat RPC server `deltachat-rpc-server` program.
+To install it check:
 https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server
 
 ## Usage
