@@ -4,7 +4,7 @@ import os
 import time
 from argparse import ArgumentParser, Namespace
 from threading import Thread
-from typing import Callable, Coroutine, Optional, Set, Union
+from typing import Callable, Optional, Set, Union
 
 import qrcode
 from appdirs import user_config_dir
@@ -29,15 +29,15 @@ class BotCli:
         self._parser = ArgumentParser(app_name)
         self._subparsers = self._parser.add_subparsers(title="subcommands")
         self._hooks = events.HookCollection()
-        self._init_hooks: Set[Callable[[Bot, Namespace], Coroutine]] = set()
-        self._start_hooks: Set[Callable[[Bot, Namespace], Coroutine]] = set()
+        self._init_hooks: Set[Callable[[Bot, Namespace], None]] = set()
+        self._start_hooks: Set[Callable[[Bot, Namespace], None]] = set()
         self._bot: Bot
 
     def on(self, event: Union[type, events.EventFilter]) -> Callable:  # noqa
         """Register decorated function as listener for the given event."""
         return self._hooks.on(event)
 
-    def on_init(self, func: Callable[[Bot, Namespace], Coroutine]) -> Callable:
+    def on_init(self, func: Callable[[Bot, Namespace], None]) -> Callable:
         """Register function to be called before the bot starts serving requests.
 
         The function will receive the bot instance and the CLI arguments received.
@@ -49,7 +49,7 @@ class BotCli:
         for func in self._init_hooks:
             func(bot, args)
 
-    def on_start(self, func: Callable[[Bot, Namespace], Coroutine]) -> Callable:
+    def on_start(self, func: Callable[[Bot, Namespace], None]) -> Callable:
         """Register function to be called when the bot is about to start serving requests.
 
         The function will receive the bot instance.
@@ -77,7 +77,7 @@ class BotCli:
 
     def add_subcommand(
         self,
-        func: Callable[[Bot, Namespace], Coroutine],
+        func: Callable[[Bot, Namespace], None],
         **kwargs,
     ) -> ArgumentParser:
         """Add a subcommand to the CLI."""
