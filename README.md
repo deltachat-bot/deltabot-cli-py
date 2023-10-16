@@ -1,5 +1,6 @@
 # deltabot-cli for Python
 
+[![CI](https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml/badge.svg)](https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 Library to speedup Delta Chat bot development.
