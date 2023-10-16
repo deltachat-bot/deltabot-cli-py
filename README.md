@@ -1,6 +1,6 @@
 # deltabot-cli for Python
 
-[![Latest Release](https://img.shields.io/pypi/v/deltabot-cli-py.svg)](https://pypi.org/project/deltabot-cli-py)
+[![Latest Release](https://img.shields.io/pypi/v/deltabot-cli.svg)](https://pypi.org/project/deltabot-cli)
 [![CI](https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml/badge.svg)](https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
