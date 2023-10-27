@@ -54,10 +54,3 @@ jobs:
           build: true
           # only upload if a tag is pushed (otherwise just build & check)
           upload: ${{ github.event_name == 'push' && steps.check-tag.outputs.match == 'true' }}
-      - name: Create GitHub release
-        if: ${{ github.event_name == 'push' && steps.check-tag.outputs.match == 'true' }}
-        uses: Roang-zero1/github-create-release-action@master
-        with:
-          version_regex: ^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
