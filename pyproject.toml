@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.1.0"
+version = "0.2.0"
 name = "deltabot-cli"
 description = "Library to speedup Delta Chat bot development"
 readme = "README.md"
@@ -19,7 +19,7 @@ classifiers = [
   "Intended Audience :: Developers",
 ]
 dependencies = [
-    "deltachat-rpc-client>=1.125.0",
+    "deltachat-rpc-client>=1.127.0",
     "appdirs>=1.4.4",
     "rich>=12.6.0",
     "qrcode>=7.4.2",
@@ -35,7 +35,7 @@ dev = [
   "pytest",
 ]
 server = [
-  "deltachat-rpc-server>=1.125.0",
+  "deltachat-rpc-server>=1.127.0",
 ]
 
 [tool.black]

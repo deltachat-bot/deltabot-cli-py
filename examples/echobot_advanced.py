@@ -9,11 +9,11 @@ cli = BotCli("echobot")
 
 @cli.on(events.RawEvent)
 def log_event(event):
-    if event.type == EventType.INFO:
+    if event.kind == EventType.INFO:
         logging.info(event.msg)
-    elif event.type == EventType.WARNING:
+    elif event.kind == EventType.WARNING:
         logging.warning(event.msg)
-    elif event.type == EventType.ERROR:
+    elif event.kind == EventType.ERROR:
         logging.error(event.msg)
 
 
