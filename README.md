@@ -6,20 +6,14 @@
 
 Library to speedup Delta Chat bot development.
 
-With this library you can focus on writing your event/message processing logic and let us handle the repetitive
-process of creating the bot CLI.
+With this library you can focus on writing your event/message processing logic and let us handle the
+repetitive process of creating the bot CLI.
 
 ## Install
 
 ```sh
 pip install deltabot-cli-py
 ```
-
-### Installing deltachat-rpc-server
-
-This package depends on a standalone Delta Chat RPC server `deltachat-rpc-server` program.
-To install it check:
-https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-server
 
 ## Usage
 
@@ -51,4 +45,4 @@ A progress bar is displayed while the bot is configuring, and logs are pretty-pr
 
 For more examples check the [examples](https://github.com/deltachat-bot/deltabot-cli-py/tree/master/examples) folder.
 
-**Note:** deltabot-cli uses [deltachat-rpc-client](https://github.com/deltachat/deltachat-core-rust/tree/master/deltachat-rpc-client) library, check its documentation and examples to better understand how to use deltabot-cli.
+**Note:** deltabot-cli uses [deltachat-rpc-client](https://pypi.org/project/deltachat-rpc-client) library, check its documentation and examples to better understand how to use deltabot-cli.
