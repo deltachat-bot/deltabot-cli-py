@@ -189,7 +189,7 @@ def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         else:
             logging.error(f"account {accid} not configured")
     if len(addrs) != 0:
-        logger.info(f"Listening at: {', '.join(addrs)}")
+        logging.info(f"Listening at: {', '.join(addrs)}")
         cli._on_start(bot, args)
         while True:
             try:
