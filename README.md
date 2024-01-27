@@ -12,7 +12,7 @@ repetitive process of creating the bot CLI.
 ## Install
 
 ```sh
-pip install deltabot-cli-py
+pip install deltabot-cli
 ```
 
 ## Usage
