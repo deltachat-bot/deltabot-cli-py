@@ -1,4 +1,5 @@
 """Command Line Interface application"""
+
 import logging
 import os
 import time
@@ -8,11 +9,13 @@ from typing import Callable, Optional, Set, Union
 
 import qrcode
 from appdirs import user_config_dir
-from deltachat_rpc_client import AttrDict, Bot, DeltaChat, EventType, Rpc, const, events
-from deltachat_rpc_client.rpc import JsonRpcError
 from rich.logging import RichHandler
 
-from ._utils import ConfigProgressBar, parse_docstring
+from ._utils import AttrDict, ConfigProgressBar, parse_docstring
+from .client import Bot
+from .const import COMMAND_PREFIX, EventType
+from .events import EventFilter, HookCollection, NewMessage, RawEvent
+from .rpc import JsonRpcError, Rpc
 
 
 class BotCli:
@@ -28,12 +31,12 @@ class BotCli:
         self.log_level = log_level
         self._parser = ArgumentParser(app_name)
         self._subparsers = self._parser.add_subparsers(title="subcommands")
-        self._hooks = events.HookCollection()
+        self._hooks = HookCollection()
         self._init_hooks: Set[Callable[[Bot, Namespace], None]] = set()
         self._start_hooks: Set[Callable[[Bot, Namespace], None]] = set()
         self._bot: Bot
 
-    def on(self, event: Union[type, events.EventFilter]) -> Callable:  # noqa
+    def on(self, event: Union[type, EventFilter]) -> Callable:  # noqa
         """Register decorated function as listener for the given event."""
         return self._hooks.on(event)
 
@@ -62,9 +65,9 @@ class BotCli:
             func(bot, args)
 
     def is_not_known_command(self, event: AttrDict) -> bool:
-        if not event.command.startswith(const.COMMAND_PREFIX):
+        if not event.command.startswith(COMMAND_PREFIX):
             return True
-        for hook in self._bot._hooks.get(events.NewMessage, []):  # pylint:disable=W0212
+        for hook in self._bot._hooks.get(NewMessage, []):  # pylint:disable=W0212
             if event.command == hook[1].command:
                 return False
         return True
@@ -77,7 +80,7 @@ class BotCli:
 
     def add_subcommand(
         self,
-        func: Callable[[Bot, Namespace], None],
+        func: Callable[["BotCli", Bot, Namespace], None],
         **kwargs,
     ) -> ArgumentParser:
         """Add a subcommand to the CLI."""
@@ -123,7 +126,7 @@ class BotCli:
         config_parser.add_argument("option", help="option name", nargs="?")
         config_parser.add_argument("value", help="option value to set", nargs="?")
 
-        self.add_subcommand(self._serve_cmd, name="serve")
+        self.add_subcommand(_serve_cmd, name="serve")
         self.add_subcommand(_qr_cmd, name="qr")
 
     def get_accounts_dir(self, args: Namespace) -> str:
@@ -131,6 +134,26 @@ class BotCli:
         if not os.path.exists(args.config_dir):
             os.makedirs(args.config_dir)
         return os.path.join(args.config_dir, "accounts")
+
+    def get_or_create_account(self, rpc: Rpc, addr: str) -> int:
+        """Get account for address, if no account exists create a new one."""
+        accid = self.get_account(rpc, addr)
+        if not accid:
+            accid = rpc.add_account()
+            rpc.set_config(accid, "addr", addr)
+        return accid
+
+    def get_account(self, rpc: Rpc, addr: str) -> int:
+        """Get account id for address, if no account exists with the given address, zero is returned."""
+        for accid in rpc.get_all_account_ids():
+            if addr == self.get_address(rpc, accid):
+                return accid
+        return 0
+
+    def get_address(self, rpc: Rpc, accid: int) -> str:
+        if rpc.is_configured(accid):
+            return rpc.get_config(accid, "configured_addr")
+        return rpc.get_config(accid, "addr")
 
     def start(self) -> None:
         """Start running the bot and processing incoming messages."""
@@ -144,37 +167,43 @@ class BotCli:
         accounts_dir = self.get_accounts_dir(args)
 
         with Rpc(accounts_dir=accounts_dir) as rpc:
-            deltachat = DeltaChat(rpc)
-            accounts = deltachat.get_all_accounts()
-            account = accounts[0] if accounts else deltachat.add_account()
-
-            self._bot = Bot(account, self._hooks)
+            self._bot = Bot(rpc, self._hooks)
             self._on_init(self._bot, args)
 
-            core_version = deltachat.get_system_info().deltachat_core_version
+            core_version = rpc.get_system_info().deltachat_core_version
             self._bot.logger.info("Running deltachat core %s", core_version)
             if "cmd" in args:
-                args.cmd(self._bot, args)
+                args.cmd(self, self._bot, args)
             else:
                 self._parser.parse_args(["-h"])
 
-    def _serve_cmd(self, bot: Bot, args: Namespace) -> None:
-        """start processing messages"""
-        if bot.is_configured():
-            self._on_start(bot, args)
-            while True:
-                try:
-                    bot.run_forever()
-                except KeyboardInterrupt:
-                    return
-                except Exception as ex:  # pylint:disable=W0703
-                    logging.exception(ex)
-                    time.sleep(5)
+
+def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
+    """start processing messages"""
+    rpc = bot.rpc
+    accounts = rpc.get_all_account_ids()
+    addrs = []
+    for accid in accounts:
+        if rpc.is_configured(accid):
+            addrs.append(rpc.get_config(accid, "configured_addr"))
         else:
-            logging.error("Account is not configured")
+            logging.error(f"account {accid} not configured")
+    if len(addrs) != 0:
+        logger.info(f"Listening at: {', '.join(addrs)}")
+        cli._on_start(bot, args)
+        while True:
+            try:
+                bot.run_forever()
+            except KeyboardInterrupt:
+                return
+            except Exception as ex:  # pylint:disable=W0703
+                logging.exception(ex)
+                time.sleep(5)
+    else:
+        logging.error("There are no configured accounts to serve")
 
 
-def _init_cmd(bot: Bot, args: Namespace) -> None:
+def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     """initialize the account"""
 
     def on_progress(event: AttrDict) -> None:
@@ -184,13 +213,15 @@ def _init_cmd(bot: Bot, args: Namespace) -> None:
 
     def configure() -> None:
         try:
-            bot.configure(email=args.addr, password=args.password)
+            bot.configure(accid, email=args.addr, password=args.password)
         except JsonRpcError as err:
             logging.error(err)
 
+    accid = cli.get_or_create_account(bot.rpc, args.addr)
+
     logging.info("Starting configuration process...")
     pbar = ConfigProgressBar()
-    bot.add_hook(on_progress, events.RawEvent(EventType.CONFIGURE_PROGRESS))
+    bot.add_hook(on_progress, RawEvent(EventType.CONFIGURE_PROGRESS))
     task = Thread(target=configure)
     task.start()
     bot.run_until(lambda _: pbar.progress in (-1, pbar.total))
@@ -202,28 +233,54 @@ def _init_cmd(bot: Bot, args: Namespace) -> None:
         logging.info("Account configured successfully.")
 
 
-def _config_cmd(bot: Bot, args: Namespace) -> None:
+def _config_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     """set/get account configuration values"""
+    accounts = bot.rpc.get_all_account_ids()
+    for accid in accounts:
+        addr = cli.get_address(bot.rpc, accid)
+        print(f"Account #{accid} ({addr}):")
+        _config_cmd_for_acc(bot.rpc, accid, args)
+        print("")
+    if not accounts:
+        logging.error("There are no accounts yet, add a new account using the init subcommand")
+
+
+def _config_cmd_for_acc(rpc: Rpc, accid: int, args: Namespace) -> None:
     if args.value:
-        bot.account.set_config(args.option, args.value)
+        rpc.set_config(accid, args.option, args.value)
 
     if args.option:
         try:
-            value = bot.account.get_config(args.option)
+            value = rpc.get_config(accid, args.option)
             print(f"{args.option}={value!r}")
         except JsonRpcError:
             logging.error("Unknown configuration option: %s", args.option)
     else:
-        keys = bot.account.get_config("sys.config_keys") or ""
+        keys = rpc.get_config(accid, "sys.config_keys") or ""
         for key in keys.split():
-            value = bot.account.get_config(key)
+            value = rpc.get_config(accid, key)
             print(f"{key}={value!r}")
 
 
-def _qr_cmd(bot: Bot, _args: Namespace) -> None:
+def _qr_cmd(cli: BotCli, bot: Bot, _args: Namespace) -> None:
     """get bot's verification QR"""
-    qrdata, _ = bot.account.get_qr_code()
-    code = qrcode.QRCode()
-    code.add_data(qrdata)
-    code.print_ascii(invert=True)
-    print(qrdata)
+    accounts = bot.rpc.get_all_account_ids()
+    for accid in accounts:
+        addr = cli.get_address(bot.rpc, accid)
+        print(f"Account #{accid} ({addr}):")
+        _qr_cmd_for_acc(bot.rpc, accid)
+        print("")
+    if not accounts:
+        logging.error("There are no accounts yet, add a new account using the init subcommand")
+
+
+def _qr_cmd_for_acc(rpc: Rpc, accid: int) -> None:
+    """get bot's verification QR"""
+    if rpc.is_configured(accid):
+        qrdata, _ = rpc.get_chat_securejoin_qr_code_svg(accid, None)
+        code = qrcode.QRCode()
+        code.add_data(qrdata)
+        code.print_ascii(invert=True)
+        print(qrdata)
+    else:
+        logging.error("account not configured")

@@ -44,5 +44,3 @@ If you run the above script you will have a bot CLI, that allows to configure an
 A progress bar is displayed while the bot is configuring, and logs are pretty-printed.
 
 For more examples check the [examples](https://github.com/deltachat-bot/deltabot-cli-py/tree/master/examples) folder.
-
-**Note:** deltabot-cli uses [deltachat-rpc-client](https://pypi.org/project/deltachat-rpc-client) library, check its documentation and examples to better understand how to use deltabot-cli.

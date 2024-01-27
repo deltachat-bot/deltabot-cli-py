@@ -15,8 +15,8 @@ def log_event(event):
 
 @cli.on(events.NewMessage)
 def echo(event):
-    msg = event.message_snapshot
-    msg.chat.send_text(msg.text)
+    msg = event.msg
+    event.rpc.misc_send_text_message(event.accid, msg.chat_id, msg.text)
 
 
 if __name__ == "__main__":

@@ -19,8 +19,8 @@ def log_event(event):
 
 @cli.on(events.NewMessage)
 def echo(event):
-    msg = event.message_snapshot
-    msg.chat.send_text(msg.text)
+    msg = event.msg
+    event.rpc.misc_send_text_message(event.accid, msg.chat_id, msg.text)
 
 
 @cli.on_init
@@ -33,10 +33,9 @@ def on_start(_bot, _args):
     logging.info("Running bot...")
 
 
-def test(bot, args):
-    """set the bot's display name"""
-    bot.account.set_config("displayname", args.name)
-    logging.info("Bot display name updated to %s", args.name)
+def test(_cli, _bot, args):
+    """just some example subcommand"""
+    logging.info("Hello %s, this is an example subcommand!", args.name)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
 """Library to help with Delta Chat bot development"""
-# pylama:ignore=W0611,W0401
-from deltachat_rpc_client import *
-from deltachat_rpc_client import const, events
 
+# pylama:ignore=W0611,W0401
+from ._utils import AttrDict
 from .cli import BotCli
+from .client import Bot
+from .const import *
+from .rpc import JsonRpcError, Rpc
