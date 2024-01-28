@@ -1,3 +1,5 @@
+"""JSON-RPC communication with Delta Chat core."""
+
 import itertools
 import json
 import logging
@@ -12,24 +14,26 @@ from ._utils import to_attrdict
 
 
 class JsonRpcError(Exception):
-    pass
+    """An error occurred in your request to the JSON-RPC API."""
 
 
-class Result(Event):
+class _Result(Event):
     def __init__(self) -> None:
         self._value: Any = None
         super().__init__()
 
-    def set(self, value: Any) -> None:
+    def set(self, value: Any) -> None:  # noqa
         self._value = value
         super().set()
 
-    def wait(self) -> Any:
+    def wait(self) -> Any:  # noqa
         super().wait()
         return self._value
 
 
 class Rpc:
+    """Access to the Delta Chat JSON-RPC API."""
+
     def __init__(self, accounts_dir: Optional[str] = None, **kwargs):
         """The given arguments will be passed to subprocess.Popen()"""
         if accounts_dir:
@@ -42,7 +46,7 @@ class Rpc:
         self.process: subprocess.Popen
         self.id_iterator: Iterator[int]
         # Map from request ID to the result.
-        self.pending_results: Dict[int, Result]
+        self.pending_results: Dict[int, _Result]
         self.request_queue: Queue[Any]
         self.closing: bool
         self.reader_thread: Thread
@@ -51,16 +55,15 @@ class Rpc:
     def start(self) -> None:
         if sys.version_info >= (3, 11):
             # Prevent subprocess from capturing SIGINT.
-            kwargs = dict(process_group=0)
+            kwargs = {"process_group": 0, **self._kwargs}
         else:
             # `process_group` is not supported before Python 3.11.
-            kwargs = dict(preexec_fn=os.setpgrp)  # noqa: PLW1509
-        self.process = subprocess.Popen(
+            kwargs = {"preexec_fn": os.setpgrp, **self._kwargs}  # noqa: PLW1509
+        self.process = subprocess.Popen(  # noqa: R1732
             "deltachat-rpc-server",
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             **kwargs,
-            **self._kwargs,
         )
         self.id_iterator = itertools.count(start=1)
         self.pending_results = {}
@@ -75,6 +78,7 @@ class Rpc:
         """Terminate RPC server process and wait until the reader loop finishes."""
         self.closing = True
         self.stop_io_for_all_accounts()
+        assert self.process.stdin
         self.process.stdin.close()
         self.reader_thread.join()
         self.request_queue.put(None)
@@ -89,6 +93,7 @@ class Rpc:
 
     def reader_loop(self) -> None:
         try:
+            assert self.process.stdout
             while True:
                 line = self.process.stdout.readline()
                 if not line:  # EOF
@@ -105,6 +110,7 @@ class Rpc:
     def writer_loop(self) -> None:
         """Writer loop ensuring only a single thread writes requests."""
         try:
+            assert self.process.stdin
             while True:
                 request = self.request_queue.get()
                 if not request:
@@ -126,7 +132,7 @@ class Rpc:
                 "params": args,
                 "id": request_id,
             }
-            result = self.pending_results[request_id] = Result()
+            result = self.pending_results[request_id] = _Result()
             self.request_queue.put(request)
             response = result.wait()
 

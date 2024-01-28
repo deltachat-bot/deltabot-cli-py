@@ -40,7 +40,12 @@ class AttrDict(dict):
     """Dictionary that allows accessing values using the "dot notation" as attributes."""
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__({_camel_to_snake(key): to_attrdict(value) for key, value in dict(*args, **kwargs).items()})
+        super().__init__(
+            {
+                _camel_to_snake(key): to_attrdict(value)
+                for key, value in dict(*args, **kwargs).items()
+            }
+        )
 
     def __getattr__(self, attr):
         if attr in self:
@@ -79,7 +84,7 @@ def run_client_cli(
 
     Extra keyword arguments are passed to the internal Rpc object.
     """
-    from .client import Client
+    from .client import Client  # noqa
 
     _run_cli(Client, hooks, argv, **kwargs)
 
@@ -93,7 +98,7 @@ def run_bot_cli(
 
     Extra keyword arguments are passed to the internal Rpc object.
     """
-    from .client import Bot
+    from .client import Bot  # noqa
 
     _run_cli(Bot, hooks, argv, **kwargs)
 
@@ -104,7 +109,7 @@ def _run_cli(
     argv: Optional[list] = None,
     **kwargs,
 ) -> None:
-    from .rpc import Rpc
+    from .rpc import Rpc  # noqa
 
     if argv is None:
         argv = sys.argv
@@ -129,7 +134,9 @@ def _run_cli(
         if not rpc.is_configured(accid):
             assert args.email, "Account is not configured and email must be provided"
             assert args.password, "Account is not configured and password must be provided"
-            configure_thread = Thread(run=client.configure, args=(accid, args.email, args.password))
+            configure_thread = Thread(
+                target=client.configure, args=(accid, args.email, args.password)
+            )
             configure_thread.start()
         client.run_forever()
 

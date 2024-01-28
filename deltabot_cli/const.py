@@ -1,3 +1,6 @@
+"""Constants and enumerations."""
+
+# pylama:ignore=C0115
 from enum import Enum, IntEnum
 
 COMMAND_PREFIX = "/"

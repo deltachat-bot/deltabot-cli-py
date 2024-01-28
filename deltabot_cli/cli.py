@@ -144,7 +144,9 @@ class BotCli:
         return accid
 
     def get_account(self, rpc: Rpc, addr: str) -> int:
-        """Get account id for address, if no account exists with the given address, zero is returned."""
+        """Get account id for address.
+        If no account exists with the given address, zero is returned.
+        """
         for accid in rpc.get_all_account_ids():
             if addr == self.get_address(rpc, accid):
                 return accid
@@ -190,7 +192,7 @@ def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
             logging.error(f"account {accid} not configured")
     if len(addrs) != 0:
         logging.info(f"Listening at: {', '.join(addrs)}")
-        cli._on_start(bot, args)
+        cli._on_start(bot, args)  # noqa
         while True:
             try:
                 bot.run_forever()

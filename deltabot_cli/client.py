@@ -1,17 +1,7 @@
 """Event loop implementations offering high level event handling/hooking."""
 
 import logging
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Dict,
-    Iterable,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Callable, Dict, Iterable, Optional, Set, Tuple, Type, Union
 
 from ._utils import (
     AttrDict,
