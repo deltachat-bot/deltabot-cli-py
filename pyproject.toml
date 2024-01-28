@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.2.0"
+version = "1.0.0"
 name = "deltabot-cli"
 description = "Library to speedup Delta Chat bot development"
 readme = "README.md"
