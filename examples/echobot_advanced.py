@@ -8,7 +8,7 @@ cli = BotCli("echobot")
 
 
 @cli.on(events.RawEvent)
-def log_event(event):
+def log_event(bot, accid, event):
     if event.kind == EventType.INFO:
         logging.info(event.msg)
     elif event.kind == EventType.WARNING:
@@ -18,9 +18,9 @@ def log_event(event):
 
 
 @cli.on(events.NewMessage)
-def echo(event):
+def echo(bot, accid, event):
     msg = event.msg
-    event.rpc.misc_send_text_message(event.accid, msg.chat_id, msg.text)
+    bot.rpc.misc_send_text_message(accid, msg.chat_id, msg.text)
 
 
 @cli.on_init

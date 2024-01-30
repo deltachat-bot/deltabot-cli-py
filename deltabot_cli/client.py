@@ -91,30 +91,33 @@ class Client:
                 self._process_messages(accid)  # Process old messages.
         while True:
             raw_event = self.rpc.get_next_event()
-            event = AttrDict(rpc=self.rpc, accid=raw_event.context_id, **raw_event.event)
-            self._on_event(event)
+            accid = raw_event.context_id
+            event = raw_event.event
+            self._on_event(accid, event)
             if event.kind == EventType.INCOMING_MSG:
-                self._process_messages(event.accid)
+                self._process_messages(accid)
 
             if func(event):
                 return event
 
-    def _on_event(self, event: AttrDict, filter_type: Type[EventFilter] = RawEvent) -> None:
+    def _on_event(
+        self, accid: int, event: AttrDict, filter_type: Type[EventFilter] = RawEvent
+    ) -> None:
         for hook, evfilter in self._hooks.get(filter_type, []):
             if evfilter.filter(event):
                 try:
-                    hook(event)
+                    hook(self, accid, event)
                 except Exception as ex:
                     self.logger.exception(ex)
 
-    def _parse_command(self, event: AttrDict) -> None:
+    def _parse_command(self, accid: int, event: AttrDict) -> None:
         cmds = [hook[1].command for hook in self._hooks.get(NewMessage, []) if hook[1].command]
         parts = event.msg.text.split(maxsplit=1)
         payload = parts[1] if len(parts) > 1 else ""
         cmd = parts.pop(0)
 
         if "@" in cmd:
-            suffix = "@" + self.rpc.get_contact(event.accid, SpecialContactId.SELF).address
+            suffix = "@" + self.rpc.get_contact(accid, SpecialContactId.SELF).address
             if cmd.endswith(suffix):
                 cmd = cmd[: -len(suffix)]
             else:
@@ -135,31 +138,31 @@ class Client:
         event["command"], event["payload"] = cmd, payload
 
     def _on_new_msg(self, accid: int, msg: AttrDict) -> None:
-        event = AttrDict(rpc=self.rpc, accid=accid, command="", payload="", msg=msg)
+        event = AttrDict(command="", payload="", msg=msg)
         if not msg.is_info and msg.text.startswith(COMMAND_PREFIX):
-            self._parse_command(event)
-        self._on_event(event, NewMessage)
+            self._parse_command(accid, event)
+        self._on_event(accid, event, NewMessage)
 
     def _handle_info_msg(self, accid: int, snapshot: AttrDict) -> None:
-        event = AttrDict(rpc=self.rpc, accid=accid, msg=snapshot)
+        event = AttrDict(msg=snapshot)
 
         img_changed = parse_system_image_changed(snapshot.text)
         if img_changed:
             _, event["image_deleted"] = img_changed
-            self._on_event(event, GroupImageChanged)
+            self._on_event(accid, event, GroupImageChanged)
             return
 
         title_changed = parse_system_title_changed(snapshot.text)
         if title_changed:
             _, event["old_name"] = title_changed
-            self._on_event(event, GroupNameChanged)
+            self._on_event(accid, event, GroupNameChanged)
             return
 
         members_changed = parse_system_add_remove(snapshot.text)
         if members_changed:
             action, event["member"], _ = members_changed
             event["member_added"] = action == "added"
-            self._on_event(event, MemberListChanged)
+            self._on_event(accid, event, MemberListChanged)
             return
 
         self.logger.warning(

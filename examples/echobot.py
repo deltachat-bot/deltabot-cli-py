@@ -9,14 +9,14 @@ cli = BotCli("echobot")
 
 
 @cli.on(events.RawEvent)
-def log_event(event):
+def log_event(bot, accid, event):
     logging.info(event)
 
 
 @cli.on(events.NewMessage)
-def echo(event):
+def echo(bot, accid, event):
     msg = event.msg
-    event.rpc.misc_send_text_message(event.accid, msg.chat_id, msg.text)
+    bot.rpc.misc_send_text_message(accid, msg.chat_id, msg.text)
 
 
 if __name__ == "__main__":
