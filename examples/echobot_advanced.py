@@ -6,7 +6,7 @@ cli = BotCli("echobot")
 
 
 @cli.on(events.RawEvent)
-def log_event(bot, accid, event):
+def log_event(bot, _accid, event):
     if event.kind == EventType.INFO:
         bot.logger.info(event.msg)
     elif event.kind == EventType.WARNING:
@@ -27,11 +27,11 @@ def on_init(bot, args):
 
 
 @cli.on_start
-def on_start(bot, args):
+def on_start(bot, _args):
     bot.logger.info("Running bot...")
 
 
-def test(cli, bot, args):
+def test(_cli, bot, args):
     """just some example subcommand"""
     bot.logger.info("Hello %s, this is an example subcommand!", args.name)
 

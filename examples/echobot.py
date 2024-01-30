@@ -7,7 +7,7 @@ cli = BotCli("echobot")
 
 
 @cli.on(events.RawEvent)
-def log_event(bot, accid, event):
+def log_event(bot, _accid, event):
     bot.logger.info(event)
 
 
