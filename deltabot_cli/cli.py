@@ -189,9 +189,9 @@ def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         if rpc.is_configured(accid):
             addrs.append(rpc.get_config(accid, "configured_addr"))
         else:
-            logging.error(f"account {accid} not configured")
+            bot.logger.error(f"account {accid} not configured")
     if len(addrs) != 0:
-        logging.info(f"Listening at: {', '.join(addrs)}")
+        bot.logger.info(f"Listening at: {', '.join(addrs)}")
         cli._on_start(bot, args)  # noqa
         while True:
             try:
@@ -199,10 +199,10 @@ def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
             except KeyboardInterrupt:
                 return
             except Exception as ex:  # pylint:disable=W0703
-                logging.exception(ex)
+                bot.logger.exception(ex)
                 time.sleep(5)
     else:
-        logging.error("There are no configured accounts to serve")
+        bot.logger.error("There are no configured accounts to serve")
 
 
 def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
@@ -210,18 +210,18 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
 
     def on_progress(event: AttrDict) -> None:
         if event.comment:
-            logging.info(event.comment)
+            bot.logger.info(event.comment)
         pbar.set_progress(event.progress)
 
     def configure() -> None:
         try:
             bot.configure(accid, email=args.addr, password=args.password)
         except JsonRpcError as err:
-            logging.error(err)
+            bot.logger.error(err)
 
     accid = cli.get_or_create_account(bot.rpc, args.addr)
 
-    logging.info("Starting configuration process...")
+    bot.logger.info("Starting configuration process...")
     pbar = ConfigProgressBar()
     bot.add_hook(on_progress, RawEvent(EventType.CONFIGURE_PROGRESS))
     task = Thread(target=configure)
@@ -230,9 +230,9 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     task.join()
     pbar.close()
     if pbar.progress == -1:
-        logging.error("Configuration failed.")
+        bot.logger.error("Configuration failed.")
     else:
-        logging.info("Account configured successfully.")
+        bot.logger.info("Account configured successfully.")
 
 
 def _config_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
@@ -241,26 +241,26 @@ def _config_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     for accid in accounts:
         addr = cli.get_address(bot.rpc, accid)
         print(f"Account #{accid} ({addr}):")
-        _config_cmd_for_acc(bot.rpc, accid, args)
+        _config_cmd_for_acc(bot, accid, args)
         print("")
     if not accounts:
-        logging.error("There are no accounts yet, add a new account using the init subcommand")
+        bot.logger.error("There are no accounts yet, add a new account using the init subcommand")
 
 
-def _config_cmd_for_acc(rpc: Rpc, accid: int, args: Namespace) -> None:
+def _config_cmd_for_acc(bot: Bot, accid: int, args: Namespace) -> None:
     if args.value:
-        rpc.set_config(accid, args.option, args.value)
+        bot.rpc.set_config(accid, args.option, args.value)
 
     if args.option:
         try:
-            value = rpc.get_config(accid, args.option)
+            value = bot.rpc.get_config(accid, args.option)
             print(f"{args.option}={value!r}")
         except JsonRpcError:
-            logging.error("Unknown configuration option: %s", args.option)
+            bot.logger.error("Unknown configuration option: %s", args.option)
     else:
-        keys = rpc.get_config(accid, "sys.config_keys") or ""
+        keys = bot.rpc.get_config(accid, "sys.config_keys") or ""
         for key in keys.split():
-            value = rpc.get_config(accid, key)
+            value = bot.rpc.get_config(accid, key)
             print(f"{key}={value!r}")
 
 
@@ -270,19 +270,19 @@ def _qr_cmd(cli: BotCli, bot: Bot, _args: Namespace) -> None:
     for accid in accounts:
         addr = cli.get_address(bot.rpc, accid)
         print(f"Account #{accid} ({addr}):")
-        _qr_cmd_for_acc(bot.rpc, accid)
+        _qr_cmd_for_acc(bot, accid)
         print("")
     if not accounts:
-        logging.error("There are no accounts yet, add a new account using the init subcommand")
+        bot.logger.error("There are no accounts yet, add a new account using the init subcommand")
 
 
-def _qr_cmd_for_acc(rpc: Rpc, accid: int) -> None:
+def _qr_cmd_for_acc(bot: Bot, accid: int) -> None:
     """get bot's verification QR"""
-    if rpc.is_configured(accid):
-        qrdata, _ = rpc.get_chat_securejoin_qr_code_svg(accid, None)
+    if bot.rpc.is_configured(accid):
+        qrdata, _ = bot.rpc.get_chat_securejoin_qr_code_svg(accid, None)
         code = qrcode.QRCode()
         code.add_data(qrdata)
         code.print_ascii(invert=True)
         print(qrdata)
     else:
-        logging.error("account not configured")
+        bot.logger.error("account not configured")

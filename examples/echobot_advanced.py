@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """Advanced echo bot example."""
-import logging
-
 from deltabot_cli import BotCli, EventType, events
 
 cli = BotCli("echobot")
@@ -10,11 +8,11 @@ cli = BotCli("echobot")
 @cli.on(events.RawEvent)
 def log_event(bot, accid, event):
     if event.kind == EventType.INFO:
-        logging.info(event.msg)
+        bot.logger.info(event.msg)
     elif event.kind == EventType.WARNING:
-        logging.warning(event.msg)
+        bot.logger.warning(event.msg)
     elif event.kind == EventType.ERROR:
-        logging.error(event.msg)
+        bot.logger.error(event.msg)
 
 
 @cli.on(events.NewMessage)
@@ -24,18 +22,18 @@ def echo(bot, accid, event):
 
 
 @cli.on_init
-def on_init(_bot, args):
-    logging.info("Initializing bot with args: %s", args)
+def on_init(bot, args):
+    bot.logger.info("Initializing bot with args: %s", args)
 
 
 @cli.on_start
-def on_start(_bot, _args):
-    logging.info("Running bot...")
+def on_start(bot, args):
+    bot.logger.info("Running bot...")
 
 
-def test(_cli, _bot, args):
+def test(cli, bot, args):
     """just some example subcommand"""
-    logging.info("Hello %s, this is an example subcommand!", args.name)
+    bot.logger.info("Hello %s, this is an example subcommand!", args.name)
 
 
 if __name__ == "__main__":

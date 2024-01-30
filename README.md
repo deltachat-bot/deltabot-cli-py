@@ -20,14 +20,13 @@ pip install deltabot-cli
 Example echo-bot written with deltabot-cli:
 
 ```python
-import logging
 from deltabot_cli import BotCli, events
 
 cli = BotCli("echobot")
 
 @cli.on(events.RawEvent)
 def log_event(bot, accid, event):
-    logging.info(event)
+    bot.logger.info(event)
 
 @cli.on(events.NewMessage)
 def echo(bot, accid, event):

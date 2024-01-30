@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Minimal echo-bot example."""
 
-import logging
-
 from deltabot_cli import BotCli, events
 
 cli = BotCli("echobot")
@@ -10,7 +8,7 @@ cli = BotCli("echobot")
 
 @cli.on(events.RawEvent)
 def log_event(bot, accid, event):
-    logging.info(event)
+    bot.logger.info(event)
 
 
 @cli.on(events.NewMessage)
