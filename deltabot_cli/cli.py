@@ -13,9 +13,12 @@ from rich.logging import RichHandler
 
 from ._utils import AttrDict, ConfigProgressBar, parse_docstring
 from .client import Bot
-from .const import COMMAND_PREFIX, EventType
-from .events import EventFilter, HookCollection, NewMessage, RawEvent
+from .const import EventType
+from .events import EventFilter, HookCollection, HookDecorator, RawEvent
 from .rpc import JsonRpcError, Rpc
+
+CliEventHook = Callable[[Bot, Namespace], None]
+CmdCallback = Callable[["BotCli", Bot, Namespace], None]
 
 
 class BotCli:
@@ -32,15 +35,15 @@ class BotCli:
         self._parser = ArgumentParser(app_name)
         self._subparsers = self._parser.add_subparsers(title="subcommands")
         self._hooks = HookCollection()
-        self._init_hooks: Set[Callable[[Bot, Namespace], None]] = set()
-        self._start_hooks: Set[Callable[[Bot, Namespace], None]] = set()
+        self._init_hooks: Set[CliEventHook] = set()
+        self._start_hooks: Set[CliEventHook] = set()
         self._bot: Bot
 
-    def on(self, event: Union[type, EventFilter]) -> Callable:  # noqa
+    def on(self, event: Union[type, EventFilter]) -> HookDecorator:  # noqa
         """Register decorated function as listener for the given event."""
         return self._hooks.on(event)
 
-    def on_init(self, func: Callable[[Bot, Namespace], None]) -> Callable:
+    def on_init(self, func: CliEventHook) -> CliEventHook:
         """Register function to be called before the bot starts serving requests.
 
         The function will receive the bot instance and the CLI arguments received.
@@ -52,7 +55,7 @@ class BotCli:
         for func in self._init_hooks:
             func(bot, args)
 
-    def on_start(self, func: Callable[[Bot, Namespace], None]) -> Callable:
+    def on_start(self, func: CliEventHook) -> CliEventHook:
         """Register function to be called when the bot is about to start serving requests.
 
         The function will receive the bot instance.
@@ -64,14 +67,6 @@ class BotCli:
         for func in self._start_hooks:
             func(bot, args)
 
-    def is_not_known_command(self, event: AttrDict) -> bool:
-        if not event.command.startswith(COMMAND_PREFIX):
-            return True
-        for hook in self._bot._hooks.get(NewMessage, []):  # pylint:disable=W0212
-            if event.command == hook[1].command:
-                return False
-        return True
-
     def add_generic_option(self, *flags, **kwargs) -> None:
         """Add a generic argument option to the CLI."""
         if not (flags and flags[0].startswith("-")):
@@ -80,7 +75,7 @@ class BotCli:
 
     def add_subcommand(
         self,
-        func: Callable[["BotCli", Bot, Namespace], None],
+        func: CmdCallback,
         **kwargs,
     ) -> ArgumentParser:
         """Add a subcommand to the CLI."""

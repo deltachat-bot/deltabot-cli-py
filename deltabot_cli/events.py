@@ -17,6 +17,10 @@ from .const import EventType
 
 if TYPE_CHECKING:
     from ._utils import AttrDict
+    from .client import Bot
+FilterCallback = Callable[["Bot", "AttrDict"], bool]
+HookCallback = Callable[["Bot", "AttrDict"], None]
+HookDecorator = Callable[[HookCallback], HookCallback]
 
 
 def _tuple_of(obj, type_: type) -> tuple:
@@ -33,12 +37,11 @@ def _tuple_of(obj, type_: type) -> tuple:
 class EventFilter(ABC):
     """The base event filter.
 
-    :param func: A Callable function that should accept the event as input
-                 parameter, and return a bool value indicating whether the event
-                 should be dispatched or not.
+    :param func: A Callable that should accept the bot and event as input parameters,
+                 and return a bool value indicating whether the event should be dispatched or not.
     """
 
-    def __init__(self, func: Optional[Callable] = None):
+    def __init__(self, func: Optional[FilterCallback] = None):
         self.func = func
 
     @abstractmethod
@@ -52,13 +55,13 @@ class EventFilter(ABC):
     def __ne__(self, other):
         return not self == other
 
-    def _call_func(self, event) -> bool:
+    def _call_func(self, bot: "Bot", event: "AttrDict") -> bool:
         if not self.func:
             return True
-        return self.func(event)
+        return self.func(bot, event)
 
     @abstractmethod
-    def filter(self, event):
+    def filter(self, bot: "Bot", event: "AttrDict"):
         """Return True-like value if the event passed the filter and should be
         used, or False-like value otherwise.
         """
@@ -68,13 +71,16 @@ class RawEvent(EventFilter):
     """Matches raw core events.
 
     :param types: The types of event to match.
-    :param func: A Callable function that should accept the event as input
-                 parameter, and return a bool value indicating whether the event
-                 should be dispatched or not.
+    :param func: A Callable that should accept the bot and event as input parameter,
+                 and return a bool value indicating whether the event should be dispatched or not.
     """
 
-    def __init__(self, types: Union[None, EventType, Iterable[EventType]] = None, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        types: Union[None, EventType, Iterable[EventType]] = None,
+        func: Optional[FilterCallback] = None,
+    ):
+        super().__init__(func=func)
         try:
             self.types = _tuple_of(types, EventType)
         except TypeError as err:
@@ -88,10 +94,10 @@ class RawEvent(EventFilter):
             return (self.types, self.func) == (other.types, other.func)
         return False
 
-    def filter(self, event: "AttrDict") -> bool:
+    def filter(self, bot: "Bot", event: "AttrDict") -> bool:
         if self.types and event.kind not in self.types:
             return False
-        return self._call_func(event)
+        return self._call_func(bot, event)
 
 
 class NewMessage(EventFilter):
@@ -110,9 +116,8 @@ class NewMessage(EventFilter):
     :param is_info: If set to True only match info/system messages, if set to False
                     only match messages that are not info/system messages. If omitted
                     info/system messages as well as normal messages will be matched.
-    :param func: A Callable function that should accept the event as input
-                 parameter, and return a bool value indicating whether the event
-                 should be dispatched or not.
+    :param func: A Callable that should accept the bot and the event as input parameter,
+                 and return a bool value indicating whether the event should be dispatched or not.
     """
 
     def __init__(
@@ -126,7 +131,7 @@ class NewMessage(EventFilter):
         command: Optional[str] = None,
         is_bot: Optional[bool] = False,
         is_info: Optional[bool] = None,
-        func: Optional[Callable[["AttrDict"], bool]] = None,
+        func: Optional[FilterCallback] = None,
     ) -> None:
         super().__init__(func=func)
         self.is_bot = is_bot
@@ -165,7 +170,7 @@ class NewMessage(EventFilter):
             )
         return False
 
-    def filter(self, event: "AttrDict") -> bool:
+    def filter(self, bot: "Bot", event: "AttrDict") -> bool:
         if self.is_bot is not None and self.is_bot != event.msg.is_bot:
             return False
         if self.is_info is not None and self.is_info != event.msg.is_info:
@@ -176,7 +181,7 @@ class NewMessage(EventFilter):
             match = self.pattern(event.msg.text)
             if not match:
                 return False
-        return super()._call_func(event)
+        return super()._call_func(bot, event)
 
 
 class MemberListChanged(EventFilter):
@@ -188,9 +193,8 @@ class MemberListChanged(EventFilter):
     :param added: If set to True only match if a member was added, if set to False
                   only match if a member was removed. If omitted both, member additions
                   and removals, will be matched.
-    :param func: A Callable function that should accept the event as input
-                 parameter, and return a bool value indicating whether the event
-                 should be dispatched or not.
+    :param func: A Callable that should accept the bot and event as input parameter,
+                 and return a bool value indicating whether the event should be dispatched or not.
     """
 
     def __init__(self, added: Optional[bool] = None, **kwargs):
@@ -205,10 +209,10 @@ class MemberListChanged(EventFilter):
             return (self.added, self.func) == (other.added, other.func)
         return False
 
-    def filter(self, event: "AttrDict") -> bool:
+    def filter(self, bot: "Bot", event: "AttrDict") -> bool:
         if self.added is not None and self.added != event.member_added:
             return False
-        return self._call_func(event)
+        return self._call_func(bot, event)
 
 
 class GroupImageChanged(EventFilter):
@@ -220,9 +224,8 @@ class GroupImageChanged(EventFilter):
     :param deleted: If set to True only match if the image was deleted, if set to False
                     only match if a new image was set. If omitted both, image changes and
                     removals, will be matched.
-    :param func: A Callable function that should accept the event as input
-                 parameter, and return a bool value indicating whether the event
-                 should be dispatched or not.
+    :param func: A Callable that should accept the bot and event as input parameter,
+                 and return a bool value indicating whether the event should be dispatched or not.
     """
 
     def __init__(self, deleted: Optional[bool] = None, **kwargs):
@@ -237,10 +240,10 @@ class GroupImageChanged(EventFilter):
             return (self.deleted, self.func) == (other.deleted, other.func)
         return False
 
-    def filter(self, event: "AttrDict") -> bool:
+    def filter(self, bot: "Bot", event: "AttrDict") -> bool:
         if self.deleted is not None and self.deleted != event.image_deleted:
             return False
-        return self._call_func(event)
+        return self._call_func(bot, event)
 
 
 class GroupNameChanged(EventFilter):
@@ -249,9 +252,8 @@ class GroupNameChanged(EventFilter):
     Warning: registering a handler for this event will cause the messages
     to be marked as read. Its usage is mainly intended for bots.
 
-    :param func: A Callable function that should accept the event as input
-                 parameter, and return a bool value indicating whether the event
-                 should be dispatched or not.
+    :param func: A Callable that should accept the bot and event as input parameter,
+                 and return a bool value indicating whether the event should be dispatched or not.
     """
 
     def __hash__(self) -> int:
@@ -262,8 +264,8 @@ class GroupNameChanged(EventFilter):
             return self.func == other.func
         return False
 
-    def filter(self, event: "AttrDict") -> bool:
-        return self._call_func(event)
+    def filter(self, bot: "Bot", event: "AttrDict") -> bool:
+        return self._call_func(bot, event)
 
 
 class HookCollection:
@@ -272,18 +274,18 @@ class HookCollection:
     """
 
     def __init__(self) -> None:
-        self._hooks: Set[Tuple[Callable, Union[type, EventFilter]]] = set()
+        self._hooks: Set[Tuple[HookCallback, Union[type, EventFilter]]] = set()
 
-    def __iter__(self) -> Iterator[Tuple[Callable, Union[type, EventFilter]]]:
+    def __iter__(self) -> Iterator[Tuple[HookCallback, Union[type, EventFilter]]]:
         return iter(self._hooks)
 
-    def on(self, event: Union[type, EventFilter]) -> Callable:  # noqa
+    def on(self, event: Union[type, EventFilter]) -> HookDecorator:  # noqa
         """Register decorated function as listener for the given event."""
         if isinstance(event, type):
             event = event()
         assert isinstance(event, EventFilter), "Invalid event filter"
 
-        def _decorator(func) -> Callable:
+        def _decorator(func: HookCallback) -> HookCallback:
             self._hooks.add((func, event))
             return func
 

@@ -14,6 +14,7 @@ from .events import (
     EventFilter,
     GroupImageChanged,
     GroupNameChanged,
+    HookCallback,
     MemberListChanged,
     NewMessage,
     RawEvent,
@@ -27,7 +28,7 @@ class Client:
     def __init__(
         self,
         rpc: Rpc,
-        hooks: Optional[Iterable[Tuple[Callable, Union[type, EventFilter]]]] = None,
+        hooks: Optional[Iterable[Tuple[HookCallback, Union[type, EventFilter]]]] = None,
         logger: Optional[logging.Logger] = None,
     ) -> None:
         self.rpc = rpc
@@ -36,11 +37,11 @@ class Client:
         self._should_process_messages = 0
         self.add_hooks(hooks or [])
 
-    def add_hooks(self, hooks: Iterable[Tuple[Callable, Union[type, EventFilter]]]) -> None:
+    def add_hooks(self, hooks: Iterable[Tuple[HookCallback, Union[type, EventFilter]]]) -> None:
         for hook, event in hooks:
             self.add_hook(hook, event)
 
-    def add_hook(self, hook: Callable, event: Union[type, EventFilter] = RawEvent) -> None:
+    def add_hook(self, hook: HookCallback, event: Union[type, EventFilter] = RawEvent) -> None:
         """Register hook for the given event filter."""
         if isinstance(event, type):
             event = event()
@@ -53,7 +54,7 @@ class Client:
         )
         self._hooks.setdefault(type(event), set()).add((hook, event))
 
-    def remove_hook(self, hook: Callable, event: Union[type, EventFilter]) -> None:
+    def remove_hook(self, hook: HookCallback, event: Union[type, EventFilter]) -> None:
         """Unregister hook from the given event filter."""
         if isinstance(event, type):
             event = event()
