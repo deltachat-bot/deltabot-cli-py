@@ -8,7 +8,7 @@ description = "Library to speedup Delta Chat bot development"
 dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.8"
-license = {file = "LICENSE.txt"}
+license = {file = "LICENSE"}
 keywords = ["deltachat", "bot", "deltabot-cli"]
 authors = [
   {name = "adbenitez", email = "adb@merlinux.eu"},
