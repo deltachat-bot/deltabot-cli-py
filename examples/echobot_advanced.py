@@ -38,7 +38,7 @@ def test(_cli, bot, args):
 
 if __name__ == "__main__":
     subcmd = cli.add_subcommand(test)
-    subcmd.add_argument("name", help="the new name to set")
+    subcmd.add_argument("name", help="your name")
 
     try:
         cli.start()

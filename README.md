@@ -40,4 +40,4 @@ if __name__ == "__main__":
 If you run the above script you will have a bot CLI, that allows to configure and run a bot.
 A progress bar is displayed while the bot is configuring, and logs are pretty-printed.
 
-For more examples check the [examples](https://github.com/deltachat-bot/deltabot-cli-py/tree/master/examples) folder.
+For more examples check the [examples](./examples) folder.
