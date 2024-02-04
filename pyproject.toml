@@ -1,17 +1,17 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "2.0.0"
 name = "deltabot-cli"
 description = "Library to speedup Delta Chat bot development"
+dynamic = ["version"]
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = {file = "LICENSE.txt"}
 keywords = ["deltachat", "bot", "deltabot-cli"]
 authors = [
-  {name = "adbenitez", email = "adbenitez@merlinux.eu"},
+  {name = "adbenitez", email = "adb@merlinux.eu"},
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -34,6 +34,9 @@ dev = [
   "pylama",
   "pytest",
 ]
+
+[tool.setuptools_scm]
+# can be empty if no extra settings are needed, presence enables setuptools_scm
 
 [tool.black]
 line-length = 100
