@@ -105,7 +105,7 @@ class Client:
         self, accid: int, event: AttrDict, filter_type: Type[EventFilter] = RawEvent
     ) -> None:
         for hook, evfilter in self._hooks.get(filter_type, []):
-            if evfilter.filter(event):
+            if evfilter.filter(self, event):
                 try:
                     hook(self, accid, event)
                 except Exception as ex:
