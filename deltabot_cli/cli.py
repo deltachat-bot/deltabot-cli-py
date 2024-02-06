@@ -129,6 +129,8 @@ class BotCli:
 
         self.add_subcommand(_serve_cmd, name="serve")
         self.add_subcommand(_qr_cmd, name="qr")
+        self.add_subcommand(_list_cmd, name="list")
+        self.add_subcommand(_remove_cmd, name="remove")
 
     def get_accounts_dir(self, args: Namespace) -> str:
         """Get bot's account folder."""
@@ -148,9 +150,12 @@ class BotCli:
         """Get account id for address.
         If no account exists with the given address, zero is returned.
         """
-        for accid in rpc.get_all_account_ids():
-            if addr == self.get_address(rpc, accid):
-                return accid
+        try:
+            return int(addr)
+        except ValueError:
+            for accid in rpc.get_all_account_ids():
+                if addr == self.get_address(rpc, accid):
+                    return accid
         return 0
 
     def get_address(self, rpc: Rpc, accid: int) -> str:
@@ -179,37 +184,6 @@ class BotCli:
                 args.cmd(self, self._bot, args)
             else:
                 self._parser.parse_args(["-h"])
-
-
-def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
-    """start processing messages"""
-    rpc = bot.rpc
-    if args.account:
-        accounts = [cli.get_account(rpc, args.account)]
-        if not accounts[0]:
-            bot.logger.error(f"unknown account: {args.account!r}")
-            return
-    else:
-        accounts = rpc.get_all_account_ids()
-    addrs = []
-    for accid in accounts:
-        if rpc.is_configured(accid):
-            addrs.append(rpc.get_config(accid, "configured_addr"))
-        else:
-            bot.logger.error(f"account {accid} not configured")
-    if len(addrs) != 0:
-        bot.logger.info(f"Listening at: {', '.join(addrs)}")
-        cli._on_start(bot, args)  # noqa
-        while True:
-            try:
-                bot.run_forever(accounts[0] if args.account else 0)
-            except KeyboardInterrupt:
-                return
-            except Exception as ex:  # pylint:disable=W0703
-                bot.logger.exception(ex)
-                time.sleep(5)
-    else:
-        bot.logger.error("There are no configured accounts to serve")
 
 
 def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
@@ -246,6 +220,37 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         bot.logger.error("Configuration failed.")
     else:
         bot.logger.info("Account configured successfully.")
+
+
+def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
+    """start processing messages"""
+    rpc = bot.rpc
+    if args.account:
+        accounts = [cli.get_account(rpc, args.account)]
+        if not accounts[0]:
+            bot.logger.error(f"unknown account: {args.account!r}")
+            return
+    else:
+        accounts = rpc.get_all_account_ids()
+    addrs = []
+    for accid in accounts:
+        if rpc.is_configured(accid):
+            addrs.append(rpc.get_config(accid, "configured_addr"))
+        else:
+            bot.logger.error(f"account {accid} not configured")
+    if len(addrs) != 0:
+        bot.logger.info(f"Listening at: {', '.join(addrs)}")
+        cli._on_start(bot, args)  # noqa
+        while True:
+            try:
+                bot.run_forever(accounts[0] if args.account else 0)
+            except KeyboardInterrupt:
+                return
+            except Exception as ex:  # pylint:disable=W0703
+                bot.logger.exception(ex)
+                time.sleep(5)
+    else:
+        bot.logger.error("There are no configured accounts to serve")
 
 
 def _config_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
@@ -312,3 +317,37 @@ def _qr_cmd_for_acc(bot: Bot, accid: int) -> None:
         print(f"https://i.delta.chat/#{fragment}")
     else:
         bot.logger.error("account not configured")
+
+
+def _list_cmd(cli: BotCli, bot: Bot, _args: Namespace) -> None:
+    """show a list of existing bot accounts"""
+    rpc = bot.rpc
+    accounts = rpc.get_all_account_ids()
+    for accid in accounts:
+        addr = cli.get_address(rpc, accid)
+        if not rpc.is_configured(accid):
+            addr = addr + " (not configured)"
+        print(f"#{accid} - {addr}")
+
+
+def _remove_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
+    """remove Delta Chat accounts from the bot"""
+    if args.account:
+        accid = cli.get_account(bot.rpc, args.account)
+        if not accid:
+            bot.logger.error(f"unknown account: {args.account!r}")
+            return
+    else:
+        accounts = bot.rpc.get_all_account_ids()
+        if len(accounts) == 1:
+            accid = accounts[0]
+        else:
+            bot.logger.error(
+                "There are more than one account, to remove one of them, pass the account"
+                " address with -a/--account option"
+            )
+            return
+
+    addr = cli.get_address(bot.rpc, accid)
+    bot.rpc.remove_account(accid)
+    print(f"Account #{accid} ({addr}) removed successfully.")
