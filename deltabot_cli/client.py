@@ -76,8 +76,8 @@ class Client:
         """
         self.logger.debug("Listening to incoming events...")
         if accid:
-            self.rpc.start_io(accid)
             if self.rpc.is_configured(accid):
+                self.rpc.start_io(accid)
                 self._process_messages(accid)  # Process old messages.
         else:
             self.rpc.start_io_for_all_accounts()

@@ -189,7 +189,7 @@ class BotCli:
 def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     """initialize the account"""
 
-    def on_progress(event: AttrDict) -> None:
+    def on_progress(bot: Bot, _accid: int, event: AttrDict) -> None:
         if event.comment:
             bot.logger.info(event.comment)
         pbar.set_progress(event.progress)

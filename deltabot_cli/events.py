@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ._utils import AttrDict
     from .client import Bot
 FilterCallback = Callable[["Bot", "AttrDict"], bool]
-HookCallback = Callable[["Bot", "AttrDict"], None]
+HookCallback = Callable[["Bot", int, "AttrDict"], None]
 HookDecorator = Callable[[HookCallback], HookCallback]
 
 
