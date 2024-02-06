@@ -166,7 +166,7 @@ class Client:
                 self._on_new_msg(accid, msg)
             if msg.is_info and msg.system_message_type != SystemMessageType.WEBXDC_INFO_MESSAGE:
                 self._handle_info_msg(accid, msg)
-            self.rpc.set_config(accid, "last_msg_id", msgid)
+            self.rpc.set_config(accid, "last_msg_id", str(msgid))
 
 
 class Bot(Client):
