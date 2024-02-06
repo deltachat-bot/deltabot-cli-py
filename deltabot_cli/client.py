@@ -34,7 +34,6 @@ class Client:
         self.rpc = rpc
         self.logger = logger or logging
         self._hooks: Dict[type, Set[tuple]] = {}
-        self._should_process_messages = 0
         self.add_hooks(hooks or [])
 
     def add_hooks(self, hooks: Iterable[Tuple[HookCallback, Union[type, EventFilter]]]) -> None:
@@ -46,24 +45,12 @@ class Client:
         if isinstance(event, type):
             event = event()
         assert isinstance(event, EventFilter)
-        self._should_process_messages += int(
-            isinstance(
-                event,
-                (NewMessage, MemberListChanged, GroupImageChanged, GroupNameChanged),
-            ),
-        )
         self._hooks.setdefault(type(event), set()).add((hook, event))
 
     def remove_hook(self, hook: HookCallback, event: Union[type, EventFilter]) -> None:
         """Unregister hook from the given event filter."""
         if isinstance(event, type):
             event = event()
-        self._should_process_messages -= int(
-            isinstance(
-                event,
-                (NewMessage, MemberListChanged, GroupImageChanged, GroupNameChanged),
-            ),
-        )
         self._hooks.get(type(event), set()).remove((hook, event))
 
     def configure(self, accid: int, email: str, password: str, **kwargs) -> None:
@@ -173,14 +160,13 @@ class Client:
         )
 
     def _process_messages(self, accid: int) -> None:
-        if self._should_process_messages:
-            for msgid in self.rpc.get_next_msgs(accid):
-                msg = self.rpc.get_message(accid, msgid)
-                if msg.from_id not in [SpecialContactId.SELF, SpecialContactId.DEVICE]:
-                    self._on_new_msg(accid, msg)
-                if msg.is_info and msg.system_message_type != SystemMessageType.WEBXDC_INFO_MESSAGE:
-                    self._handle_info_msg(accid, msg)
-                self.rpc.markseen_msgs(accid, [msgid])
+        for msgid in self.rpc.get_next_msgs(accid):
+            msg = self.rpc.get_message(accid, msgid)
+            if msg.from_id not in [SpecialContactId.SELF, SpecialContactId.DEVICE]:
+                self._on_new_msg(accid, msg)
+            if msg.is_info and msg.system_message_type != SystemMessageType.WEBXDC_INFO_MESSAGE:
+                self._handle_info_msg(accid, msg)
+            self.rpc.set_config(accid, "last_msg_id", msgid)
 
 
 class Bot(Client):

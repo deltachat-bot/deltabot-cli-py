@@ -103,9 +103,6 @@ class RawEvent(EventFilter):
 class NewMessage(EventFilter):
     """Matches whenever a new message arrives.
 
-    Warning: registering a handler for this event will cause the messages
-    to be marked as read. Its usage is mainly intended for bots.
-
     :param pattern: if set, this Pattern will be used to filter the message by its text
                     content.
     :param command: If set, only match messages with the given command (ex. /help).
@@ -187,9 +184,6 @@ class NewMessage(EventFilter):
 class MemberListChanged(EventFilter):
     """Matches when a group member is added or removed.
 
-    Warning: registering a handler for this event will cause the messages
-    to be marked as read. Its usage is mainly intended for bots.
-
     :param added: If set to True only match if a member was added, if set to False
                   only match if a member was removed. If omitted both, member additions
                   and removals, will be matched.
@@ -218,9 +212,6 @@ class MemberListChanged(EventFilter):
 class GroupImageChanged(EventFilter):
     """Matches when the group image is changed.
 
-    Warning: registering a handler for this event will cause the messages
-    to be marked as read. Its usage is mainly intended for bots.
-
     :param deleted: If set to True only match if the image was deleted, if set to False
                     only match if a new image was set. If omitted both, image changes and
                     removals, will be matched.
@@ -248,9 +239,6 @@ class GroupImageChanged(EventFilter):
 
 class GroupNameChanged(EventFilter):
     """Matches when the group name is changed.
-
-    Warning: registering a handler for this event will cause the messages
-    to be marked as read. Its usage is mainly intended for bots.
 
     :param func: A Callable that should accept the bot and event as input parameter,
                  and return a bool value indicating whether the event should be dispatched or not.
