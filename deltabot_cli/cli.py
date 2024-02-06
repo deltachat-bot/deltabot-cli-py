@@ -108,9 +108,15 @@ class BotCli:
         self.add_generic_option(
             "--config-dir",
             "-c",
-            help="Program configuration folder (default: %(default)s)",
+            help="program configuration folder (default: %(default)s)",
             metavar="PATH",
             default=config_dir,
+        )
+        self.add_generic_option(
+            "--account",
+            "-a",
+            help="operate over this account only when running any subcommand",
+            metavar="ADDR",
         )
 
         init_parser = self.add_subcommand(_init_cmd, name="init")
@@ -178,7 +184,13 @@ class BotCli:
 def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     """start processing messages"""
     rpc = bot.rpc
-    accounts = rpc.get_all_account_ids()
+    if args.account:
+        accounts = [cli.get_account(rpc, args.account)]
+        if not accounts[0]:
+            bot.logger.error(f"unknown account: {args.account!r}")
+            return
+    else:
+        accounts = rpc.get_all_account_ids()
     addrs = []
     for accid in accounts:
         if rpc.is_configured(accid):
@@ -190,7 +202,7 @@ def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         cli._on_start(bot, args)  # noqa
         while True:
             try:
-                bot.run_forever()
+                bot.run_forever(accounts[0] if args.account else 0)
             except KeyboardInterrupt:
                 return
             except Exception as ex:  # pylint:disable=W0703
@@ -214,7 +226,13 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         except JsonRpcError as err:
             bot.logger.error(err)
 
-    accid = cli.get_or_create_account(bot.rpc, args.addr)
+    if args.account:
+        accid = cli.get_account(bot.rpc, args.account)
+        if not accid:
+            bot.logger.error(f"unknown account: {args.account!r}")
+            return
+    else:
+        accid = cli.get_or_create_account(bot.rpc, args.addr)
 
     bot.logger.info("Starting configuration process...")
     pbar = ConfigProgressBar()
@@ -232,7 +250,13 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
 
 def _config_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     """set/get account configuration values"""
-    accounts = bot.rpc.get_all_account_ids()
+    if args.account:
+        accounts = [cli.get_account(bot.rpc, args.account)]
+        if not accounts[0]:
+            bot.logger.error(f"unknown account: {args.account!r}")
+            return
+    else:
+        accounts = bot.rpc.get_all_account_ids()
     for accid in accounts:
         addr = cli.get_address(bot.rpc, accid)
         print(f"Account #{accid} ({addr}):")
@@ -259,9 +283,15 @@ def _config_cmd_for_acc(bot: Bot, accid: int, args: Namespace) -> None:
             print(f"{key}={value!r}")
 
 
-def _qr_cmd(cli: BotCli, bot: Bot, _args: Namespace) -> None:
+def _qr_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     """get bot's verification QR"""
-    accounts = bot.rpc.get_all_account_ids()
+    if args.account:
+        accounts = [cli.get_account(bot.rpc, args.account)]
+        if not accounts[0]:
+            bot.logger.error(f"unknown account: {args.account!r}")
+            return
+    else:
+        accounts = bot.rpc.get_all_account_ids()
     for accid in accounts:
         addr = cli.get_address(bot.rpc, accid)
         print(f"Account #{accid} ({addr}):")

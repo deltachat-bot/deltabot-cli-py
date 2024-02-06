@@ -61,11 +61,13 @@ class Client:
         self.rpc.configure(accid)
         self.logger.debug(f"Account {accid} configured")
 
-    def run_forever(self) -> None:
-        """Process events forever."""
-        self.run_until(lambda _: False)
+    def run_forever(self, accid: int = 0) -> None:
+        """Process events forever.
+        if accid != 0, only that account will be started.
+        """
+        self.run_until(lambda _: False, accid)
 
-    def run_until(self, func: Callable[[AttrDict], bool]) -> AttrDict:
+    def run_until(self, func: Callable[[AttrDict], bool], accid: int = 0) -> AttrDict:
         """Process events until the given callable evaluates to True.
 
         The callable should accept an AttrDict object representing the
@@ -73,10 +75,15 @@ class Client:
         evaluates to True.
         """
         self.logger.debug("Listening to incoming events...")
-        self.rpc.start_io_for_all_accounts()
-        for accid in self.rpc.get_all_account_ids():
+        if accid:
+            self.rpc.start_io(accid)
             if self.rpc.is_configured(accid):
                 self._process_messages(accid)  # Process old messages.
+        else:
+            self.rpc.start_io_for_all_accounts()
+            for acc_id in self.rpc.get_all_account_ids():
+                if self.rpc.is_configured(acc_id):
+                    self._process_messages(acc_id)  # Process old messages.
         while True:
             raw_event = self.rpc.get_next_event()
             accid = raw_event.context_id
