@@ -15,7 +15,7 @@ def log_event(bot, _accid, event):
         bot.logger.error(event.msg)
 
 
-@cli.on(events.NewMessage(func=is_not_known_command))
+@cli.on(events.NewMessage(is_info=False, func=is_not_known_command))
 def echo(bot, accid, event):
     msg = event.msg
     bot.rpc.misc_send_text_message(accid, msg.chat_id, msg.text)
