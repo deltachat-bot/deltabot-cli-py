@@ -8,7 +8,6 @@ description = "Library to speedup Delta Chat bot development"
 dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.8"
-license = {file = "LICENSE"}
 keywords = ["deltachat", "bot", "deltabot-cli"]
 authors = [
   {name = "adbenitez", email = "adb@merlinux.eu"},
@@ -17,6 +16,7 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python :: 3",
   "Intended Audience :: Developers",
+  "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
 ]
 dependencies = [
     "deltachat-rpc-server>=1.133.2",
