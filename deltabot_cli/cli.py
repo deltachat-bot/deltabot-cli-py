@@ -13,7 +13,7 @@ import qrcode
 from appdirs import user_config_dir
 from rich.logging import RichHandler
 
-from ._utils import AttrDict, ConfigProgressBar, get_log_level, parse_docstring
+from ._utils import AttrDict, ConfigProgressBar, parse_docstring
 from .client import Bot
 from .const import EventType
 from .events import EventFilter, HookCollection, HookDecorator, RawEvent
@@ -31,9 +31,9 @@ class BotCli:
     Start running the bot with `start()`.
     """
 
-    def __init__(self, app_name: str, log_level: Optional[int] = None) -> None:
+    def __init__(self, app_name: str, log_level: str = "info") -> None:
         self.app_name = app_name
-        self.log_level = log_level if log_level is not None else get_log_level(app_name)
+        self.log_level = log_level
         self._parser = ArgumentParser(app_name)
         self._subparsers = self._parser.add_subparsers(title="subcommands")
         self._hooks = HookCollection()
@@ -120,6 +120,17 @@ class BotCli:
             help="operate only over the given account when running any subcommand",
             metavar="ADDR",
         )
+        choices = ["debug", "info", "warning", "error"]
+        assert (
+            self.log_level in choices
+        ), f"the given log_level ({self.log_level!r}) is not supported, select one of: {choices!r}"
+        self.add_generic_option(
+            "--logging",
+            "-l",
+            help="Logging level/verbosity (default: %(default)s)",
+            default=self.log_level,
+            choices=["debug", "info", "warning", "error", "critical"],
+        )
 
         init_parser = self.add_subcommand(_init_cmd, name="init")
         init_parser.add_argument("addr", help="the e-mail address to use")
@@ -169,14 +180,15 @@ class BotCli:
         """Start running the bot and processing incoming messages."""
         self.init_parser()
         args = self._parser.parse_args()
+        log_level = int(getattr(logging, args.logging.upper()))
         logging.basicConfig(
-            level=self.log_level,
+            level=log_level,
             format="%(message)s",
             handlers=[RichHandler(show_path=False)],
         )
         accounts_dir = self.get_accounts_dir(args)
 
-        kwargs = {"stderr": subprocess.DEVNULL} if self.log_level > logging.DEBUG else {}
+        kwargs = {"stderr": subprocess.DEVNULL} if log_level > logging.DEBUG else {}
         with Rpc(accounts_dir=accounts_dir, **kwargs) as rpc:
             self._bot = Bot(rpc, self._hooks)
             self._on_init(self._bot, args)
