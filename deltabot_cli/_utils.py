@@ -1,6 +1,8 @@
 """Utilities"""
 
 import argparse
+import logging
+import os
 import re
 import sys
 from threading import Thread
@@ -211,3 +213,10 @@ def parse_docstring(txt) -> tuple:
     else:
         help_ = txt[: i + 1]
     return help_, description
+
+
+def get_log_level(name: str) -> int:
+    """Get log level from environment variables. Defaults to INFO if not set."""
+    name = name.upper().replace("-", "_")
+    level = os.getenv(f"{name}_LOG", "info").upper()
+    return int(getattr(logging, level))
