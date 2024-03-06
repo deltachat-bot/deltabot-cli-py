@@ -213,7 +213,7 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     bot.add_hook(on_progress, RawEvent(EventType.CONFIGURE_PROGRESS))
     task = Thread(target=configure)
     task.start()
-    bot.run_until(lambda _: pbar.progress in (-1, pbar.total))
+    bot._run_until(lambda _: pbar.progress in (-1, pbar.total))  # noqa: access to protected field
     task.join()
     pbar.close()
     if pbar.progress == -1:
