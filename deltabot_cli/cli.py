@@ -2,6 +2,7 @@
 
 import logging
 import os
+import sys
 import time
 from argparse import ArgumentParser, Namespace
 from threading import Thread
@@ -115,7 +116,7 @@ class BotCli:
         self.add_generic_option(
             "--account",
             "-a",
-            help="operate over this account only when running any subcommand",
+            help="operate only over the given account when running any subcommand",
             metavar="ADDR",
         )
 
@@ -204,7 +205,7 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         accid = cli.get_account(bot.rpc, args.account)
         if not accid:
             bot.logger.error(f"unknown account: {args.account!r}")
-            return
+            sys.exit(1)
     else:
         accid = cli.get_or_create_account(bot.rpc, args.addr)
 
@@ -218,6 +219,7 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     pbar.close()
     if pbar.progress == -1:
         bot.logger.error("Configuration failed.")
+        sys.exit(1)
     else:
         bot.logger.info("Account configured successfully.")
 
@@ -229,7 +231,7 @@ def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         accounts = [cli.get_account(rpc, args.account)]
         if not accounts[0]:
             bot.logger.error(f"unknown account: {args.account!r}")
-            return
+            sys.exit(1)
     else:
         accounts = rpc.get_all_account_ids()
     addrs = []
@@ -251,6 +253,7 @@ def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
                 time.sleep(5)
     else:
         bot.logger.error("There are no configured accounts to serve")
+        sys.exit(1)
 
 
 def _config_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
@@ -259,7 +262,7 @@ def _config_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         accounts = [cli.get_account(bot.rpc, args.account)]
         if not accounts[0]:
             bot.logger.error(f"unknown account: {args.account!r}")
-            return
+            sys.exit(1)
     else:
         accounts = bot.rpc.get_all_account_ids()
     for accid in accounts:
@@ -269,6 +272,7 @@ def _config_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         print("")
     if not accounts:
         bot.logger.error("There are no accounts yet, add a new account using the init subcommand")
+        sys.exit(1)
 
 
 def _config_cmd_for_acc(bot: Bot, accid: int, args: Namespace) -> None:
@@ -294,7 +298,7 @@ def _qr_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         accounts = [cli.get_account(bot.rpc, args.account)]
         if not accounts[0]:
             bot.logger.error(f"unknown account: {args.account!r}")
-            return
+            sys.exit(1)
     else:
         accounts = bot.rpc.get_all_account_ids()
     for accid in accounts:
@@ -304,6 +308,7 @@ def _qr_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         print("")
     if not accounts:
         bot.logger.error("There are no accounts yet, add a new account using the init subcommand")
+        sys.exit(1)
 
 
 def _qr_cmd_for_acc(bot: Bot, accid: int) -> None:
@@ -336,7 +341,7 @@ def _remove_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         accid = cli.get_account(bot.rpc, args.account)
         if not accid:
             bot.logger.error(f"unknown account: {args.account!r}")
-            return
+            sys.exit(1)
     else:
         accounts = bot.rpc.get_all_account_ids()
         if len(accounts) == 1:
@@ -346,7 +351,7 @@ def _remove_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
                 "There are more than one account, to remove one of them, pass the account"
                 " address with -a/--account option"
             )
-            return
+            sys.exit(1)
 
     addr = cli.get_address(bot.rpc, accid)
     bot.rpc.remove_account(accid)
