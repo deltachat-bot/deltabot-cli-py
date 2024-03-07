@@ -13,10 +13,10 @@ import qrcode
 from appdirs import user_config_dir
 from rich.logging import RichHandler
 
-from ._utils import AttrDict, ConfigProgressBar, parse_docstring
+from ._utils import ConfigProgressBar, parse_docstring
 from .client import Bot
 from .const import EventType
-from .events import EventFilter, HookCollection, HookDecorator, RawEvent
+from .events import EventFilter, HookCollection, HookDecorator
 from .rpc import JsonRpcError, Rpc
 
 CliEventHook = Callable[[Bot, Namespace], None]
@@ -201,13 +201,8 @@ class BotCli:
                 self._parser.parse_args(["-h"])
 
 
-def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
+def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:  # noqa: C901
     """initialize the account"""
-
-    def on_progress(bot: Bot, _accid: int, event: AttrDict) -> None:
-        if event.comment:
-            bot.logger.info(event.comment)
-        pbar.set_progress(event.progress)
 
     def configure() -> None:
         try:
@@ -224,11 +219,21 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         accid = cli.get_or_create_account(bot.rpc, args.addr)
 
     bot.logger.info("Starting configuration process...")
-    pbar = ConfigProgressBar()
-    bot.add_hook(on_progress, RawEvent(EventType.CONFIGURE_PROGRESS))
     task = Thread(target=configure)
     task.start()
-    bot._run_until(lambda _: pbar.progress in (-1, pbar.total))  # noqa: access to protected field
+    pbar = ConfigProgressBar()
+    while True:
+        raw_event = bot.rpc.get_next_event()
+        accid = raw_event.context_id
+        event = raw_event.event
+        if event.kind == EventType.CONFIGURE_PROGRESS:
+            if event.comment:
+                bot.logger.info(event.comment)
+            pbar.set_progress(event.progress)
+        elif event.kind in (EventType.INFO, EventType.WARNING, EventType.ERROR):
+            bot._on_event(accid, event)  # noqa: access to protected field
+        if pbar.progress in (-1, pbar.total):
+            break
     task.join()
     pbar.close()
     if pbar.progress == -1:

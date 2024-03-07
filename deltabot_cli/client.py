@@ -59,7 +59,6 @@ class Client:
         if kwargs:
             self.rpc.batch_set_config(accid, kwargs)
         self.rpc.configure(accid)
-        self.logger.debug(f"Account {accid} configured")
 
     def run_forever(self, accid: int = 0) -> None:
         """Process events forever.
@@ -85,19 +84,13 @@ class Client:
                 if self.rpc.is_configured(acc_id):
                     self._process_messages(acc_id)  # Process old messages.
 
-        def wrapper(event):
-            if event.kind == EventType.INCOMING_MSG:
-                self._process_messages(accid)
-            return func(event)
-
-        return self._run_until(wrapper)
-
-    def _run_until(self, func: Callable[[AttrDict], bool]) -> AttrDict:
         while True:
             raw_event = self.rpc.get_next_event()
             accid = raw_event.context_id
             event = raw_event.event
             self._on_event(accid, event)
+            if event.kind == EventType.INCOMING_MSG:
+                self._process_messages(accid)
             if func(event):
                 return event
 
