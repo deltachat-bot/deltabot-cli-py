@@ -169,6 +169,7 @@ class BotCli:
             for accid in rpc.get_all_account_ids():
                 if addr == self.get_address(rpc, accid):
                     return accid
+
         return 0
 
     def get_address(self, rpc: Rpc, accid: int) -> str:
@@ -181,16 +182,13 @@ class BotCli:
         self.init_parser()
         args = self._parser.parse_args()
         log_level = int(getattr(logging, args.logging.upper()))
-        logging.basicConfig(
-            level=log_level,
-            format="%(message)s",
-            handlers=[RichHandler(show_path=False)],
-        )
+        logger = logging.Logger(self.app_name, log_level)
+        logger.handlers = [RichHandler(show_path=False, omit_repeated_times=False)]
         accounts_dir = self.get_accounts_dir(args)
 
         kwargs = {"stderr": subprocess.DEVNULL} if log_level > logging.DEBUG else {}
         with Rpc(accounts_dir=accounts_dir, **kwargs) as rpc:
-            self._bot = Bot(rpc, self._hooks)
+            self._bot = Bot(rpc, self._hooks, logger)
             self._on_init(self._bot, args)
 
             core_version = rpc.get_system_info().deltachat_core_version
