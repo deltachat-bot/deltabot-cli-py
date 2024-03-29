@@ -7,7 +7,7 @@ import sys
 import time
 from argparse import ArgumentParser, Namespace
 from threading import Thread
-from typing import Callable, Optional, Set, Union
+from typing import Callable, Set, Union
 
 import qrcode
 from appdirs import user_config_dir
