@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Advanced echo bot example."""
-from deltabot_cli import BotCli, EventType, events, is_not_known_command
+from deltachat2 import MsgData
+
+from deltabot_cli import BotCli, EventType, events
 
 cli = BotCli("echobot")
 
@@ -33,23 +35,25 @@ def log_event(bot, accid, event):
     elif event.kind == EventType.ERROR:
         bot.logger.error(event.msg)
     elif event.kind == EventType.SECUREJOIN_INVITER_PROGRESS:
-        if event.progress == 1000:
+        if event.progress == 1000 and not bot.rpc.get_contact(accid, event.contact_id).is_bot:
             # bot's QR scanned by an user, send introduction message
             chatid = bot.rpc.create_chat_by_contact_id(accid, event.contact_id)
-            reply = {"text": "Hi, I will repeat anything you say to me"}
+            reply = MsgData(text="Hi, I will repeat anything you say to me")
             bot.rpc.send_msg(accid, chatid, reply)
 
 
-@cli.on(events.NewMessage(is_info=False, func=is_not_known_command))
+@cli.on(events.NewMessage(is_info=False))
 def echo(bot, accid, event):
+    if bot.has_command(event.command):
+        return
     msg = event.msg
-    bot.rpc.misc_send_text_message(accid, msg.chat_id, msg.text)
+    bot.rpc.send_msg(accid, msg.chat_id, MsgData(text=msg.text))
 
 
 @cli.on(events.NewMessage(command="/help"))
 def _help(bot, accid, event):
     msg = event.msg
-    bot.rpc.send_msg(accid, msg.chat_id, {"text": "I will repeat anything you say to me"})
+    bot.rpc.send_msg(accid, msg.chat_id, MsgData(text="I will repeat anything you say to me"))
 
 
 def test(_cli, bot, args):

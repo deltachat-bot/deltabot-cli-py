@@ -11,13 +11,11 @@ from typing import Callable, Optional, Set, Union
 
 import qrcode
 from appdirs import user_config_dir
+from deltachat2 import Bot, Event, EventType, IOTransport, JsonRpcError, Rpc
+from deltachat2.events import EventFilter, HookCollection, HookDecorator, RawEvent
 from rich.logging import RichHandler
 
 from ._utils import ConfigProgressBar, parse_docstring
-from .client import Bot
-from .const import EventType
-from .events import EventFilter, HookCollection, HookDecorator
-from .rpc import JsonRpcError, Rpc
 
 CliEventHook = Callable[[Bot, Namespace], None]
 CmdCallback = Callable[["BotCli", Bot, Namespace], None]
@@ -187,7 +185,8 @@ class BotCli:
         accounts_dir = self.get_accounts_dir(args)
 
         kwargs = {"stderr": subprocess.DEVNULL} if log_level > logging.DEBUG else {}
-        with Rpc(accounts_dir=accounts_dir, **kwargs) as rpc:
+        with IOTransport(accounts_dir=accounts_dir, **kwargs) as trans:
+            rpc = Rpc(trans)
             self._bot = Bot(rpc, self._hooks, logger)
             self._on_init(self._bot, args)
 
@@ -229,7 +228,7 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:  # noqa: C901
                 bot.logger.info(event.comment)
             pbar.set_progress(event.progress)
         elif event.kind in (EventType.INFO, EventType.WARNING, EventType.ERROR):
-            bot._on_event(accid, event)  # noqa: access to protected field
+            bot._on_event(Event(accid, event), RawEvent)  # noqa: access to protected field
         if pbar.progress in (-1, pbar.total):
             break
     task.join()

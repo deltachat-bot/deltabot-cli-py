@@ -19,7 +19,7 @@ classifiers = [
   "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
 ]
 dependencies = [
-    "deltachat-rpc-server>=1.133.2",
+    "deltachat2[full]",
     "appdirs>=1.4.4",
     "rich>=12.6.0",
     "qrcode>=7.4.2",
