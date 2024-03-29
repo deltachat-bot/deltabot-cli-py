@@ -87,17 +87,6 @@ class BotCli:
         subparser.set_defaults(cmd=func)
         return subparser
 
-    def set_custom_config(self, key: str, value: str) -> None:
-        """set a custom configuration value.
-
-        This is useful to set custom settings for your application.
-        """
-        self._bot.account.set_config(f"ui.{self.app_name}.{key}", value)
-
-    def get_custom_config(self, key: str) -> Optional[str]:
-        """get custom a configuration value"""
-        return self._bot.account.get_config(f"ui.{self.app_name}.{key}")
-
     def init_parser(self) -> None:
         """Add some default options and subcommands.
 
