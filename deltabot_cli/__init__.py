@@ -1,6 +1,4 @@
 """Library to help with Delta Chat bot development"""
 
-# pylama:ignore=W0611,W0401
-from deltachat2 import *
-
+# pylama:ignore=W0611
 from .cli import BotCli

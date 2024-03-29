@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Minimal echo-bot example."""
 
-from deltachat2 import MsgData
+from deltachat2 import MsgData, events
 
-from deltabot_cli import BotCli, events
+from deltabot_cli import BotCli
 
 cli = BotCli("echobot")
 

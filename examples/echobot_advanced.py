@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Advanced echo bot example."""
-from deltachat2 import MsgData
+from deltachat2 import EventType, MsgData, events
 
-from deltabot_cli import BotCli, EventType, events
+from deltabot_cli import BotCli
 
 cli = BotCli("echobot")
 
