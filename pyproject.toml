@@ -25,6 +25,9 @@ dependencies = [
     "qrcode>=7.4.2",
 ]
 
+[project.urls]
+Homepage = "https://github.com/deltachat-bot/deltabot-cli-py"
+
 [project.optional-dependencies]
 dev = [
   "black",
