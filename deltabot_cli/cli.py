@@ -205,7 +205,7 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:  # noqa: C901
         accid = cli.get_or_create_account(bot.rpc, args.addr)
 
     bot.logger.info("Starting configuration process...")
-    task = Thread(target=configure)
+    task = Thread(target=configure, daemon=True)
     task.start()
     pbar = ConfigProgressBar()
     while True:
