@@ -33,6 +33,8 @@ def log_event(bot, accid, event):
         bot.logger.warning(event.msg)
     elif event.kind == EventType.ERROR:
         bot.logger.error(event.msg)
+    elif event.kind == EventType.MSG_DELIVERED:
+        bot.rpc.delete_messages(accid, [event.msg_id])
     elif event.kind == EventType.SECUREJOIN_INVITER_PROGRESS:
         if event.progress == 1000 and not bot.rpc.get_contact(accid, event.contact_id).is_bot:
             # bot's QR scanned by an user, send introduction message
@@ -41,18 +43,25 @@ def log_event(bot, accid, event):
             bot.rpc.send_msg(accid, chatid, reply)
 
 
+@cli.on(events.NewMessage(is_info=True))
+def delete_info_msgs(bot, accid, event):
+    bot.rpc.delete_messages(accid, [event.msg.id])
+
+
 @cli.on(events.NewMessage(is_info=False))
 def echo(bot, accid, event):
     if bot.has_command(event.command):
         return
     msg = event.msg
     bot.rpc.send_msg(accid, msg.chat_id, MsgData(text=msg.text))
+    bot.rpc.delete_messages(accid, [msg.id])
 
 
 @cli.on(events.NewMessage(command="/help"))
 def _help(bot, accid, event):
     msg = event.msg
     bot.rpc.send_msg(accid, msg.chat_id, MsgData(text="I will repeat anything you say to me"))
+    bot.rpc.delete_messages(accid, [msg.id])
 
 
 def test(_cli, bot, args):
