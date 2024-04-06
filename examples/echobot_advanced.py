@@ -15,7 +15,6 @@ def on_init(bot, args):
             bot.rpc.set_config(accid, "displayname", "EchoBot")
             status = "I am a Delta Chat bot, I will repeat anything you say to me"
             bot.rpc.set_config(accid, "selfstatus", status)
-            bot.rpc.set_config(accid, "delete_server_after", "1")  # delete immediately from server
             # bot.rpc.set_config(accid, "delete_device_after", "3600")
 
 
