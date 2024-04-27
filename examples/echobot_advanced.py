@@ -43,9 +43,10 @@ def log_event(bot, accid, event):
             bot.rpc.send_msg(accid, chatid, reply)
 
 
-@cli.on(events.NewMessage(is_info=True))
-def delete_info_msgs(bot, accid, event):
-    bot.rpc.delete_messages(accid, [event.msg.id])
+@cli.on(events.NewMessage(command="/help"))
+def _help(bot, accid, event):
+    msg = event.msg
+    bot.rpc.send_msg(accid, msg.chat_id, MsgData(text="I will repeat anything you say to me"))
 
 
 @cli.on(events.NewMessage(is_info=False))
@@ -54,14 +55,11 @@ def echo(bot, accid, event):
         return
     msg = event.msg
     bot.rpc.send_msg(accid, msg.chat_id, MsgData(text=msg.text))
-    bot.rpc.delete_messages(accid, [msg.id])
 
 
-@cli.on(events.NewMessage(command="/help"))
-def _help(bot, accid, event):
-    msg = event.msg
-    bot.rpc.send_msg(accid, msg.chat_id, MsgData(text="I will repeat anything you say to me"))
-    bot.rpc.delete_messages(accid, [msg.id])
+@cli.after(events.NewMessage)
+def delete_msgs(bot, accid, event):
+    bot.rpc.delete_messages(accid, [event.msg.id])
 
 
 def test(_cli, bot, args):

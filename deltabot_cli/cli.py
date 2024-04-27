@@ -39,9 +39,13 @@ class BotCli:
         self._start_hooks: Set[CliEventHook] = set()
         self._bot: Bot
 
-    def on(self, event: Union[type, EventFilter]) -> HookDecorator:  # noqa
+    def on(self, event: Union[type, EventFilter]) -> HookDecorator:
         """Register decorated function as listener for the given event."""
         return self._hooks.on(event)
+
+    def after(self, event: Union[type, EventFilter]) -> HookDecorator:
+        """Register decorated function as listener for the given event."""
+        return self._hooks.after(event)
 
     def on_init(self, func: CliEventHook) -> CliEventHook:
         """Register function to be called before the bot starts serving requests.
