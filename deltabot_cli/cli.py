@@ -11,7 +11,7 @@ from typing import Callable, Set, Union
 
 import qrcode
 from appdirs import user_config_dir
-from deltachat2 import Bot, Event, EventType, IOTransport, JsonRpcError, Rpc
+from deltachat2 import Bot, CoreEvent, Event, EventType, IOTransport, JsonRpcError, Rpc
 from deltachat2.events import EventFilter, HookCollection, HookDecorator, RawEvent
 from rich.logging import RichHandler
 
@@ -215,7 +215,7 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:  # noqa: C901
     while True:
         raw_event = bot.rpc.get_next_event()
         accid = raw_event.context_id
-        event = raw_event.event
+        event = CoreEvent(raw_event.event)
         if event.kind == EventType.CONFIGURE_PROGRESS:
             if event.comment:
                 bot.logger.info(event.comment)
