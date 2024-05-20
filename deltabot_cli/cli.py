@@ -344,7 +344,7 @@ def _list_cmd(cli: BotCli, bot: Bot, _args: Namespace) -> None:
     for accid in accounts:
         addr = cli.get_address(rpc, accid)
         if not rpc.is_configured(accid):
-            addr = addr + " (not configured)"
+            addr = f"{addr or ''} (not configured)"
         print(f"#{accid} - {addr}")
 
 
