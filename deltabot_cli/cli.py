@@ -6,6 +6,7 @@ import subprocess
 import sys
 import time
 from argparse import ArgumentParser, Namespace
+from pathlib import Path
 from threading import Thread
 from typing import Callable, Set, Union
 
@@ -130,6 +131,9 @@ class BotCli:
         config_parser = self.add_subcommand(_config_cmd, name="config")
         config_parser.add_argument("option", help="option name", nargs="?")
         config_parser.add_argument("value", help="option value to set", nargs="?")
+
+        import_parser = self.add_subcommand(_import_cmd, name="import")
+        import_parser.add_argument("path", help="path to the account backup", type=Path)
 
         self.add_subcommand(_serve_cmd, name="serve")
         self.add_subcommand(_qr_cmd, name="qr")
@@ -365,3 +369,20 @@ def _remove_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     addr = cli.get_address(bot.rpc, accid)
     bot.rpc.remove_account(accid)
     print(f"Account #{accid} ({addr}) removed successfully.")
+
+
+def _import_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
+    """import account backup"""
+    if not args.path.exists():
+        bot.logger.error(f"path doesn't exist: {str(args.path)!r}")
+        sys.exit(1)
+    accid = bot.rpc.add_account()
+    try:
+        bot.rpc.import_backup(accid, str(args.path), None)
+    except JsonRpcError as ex:
+        bot.rpc.remove_account(accid)
+        bot.logger.exception(ex)
+        sys.exit(1)
+    else:
+        addr = bot.rpc.get_config(accid, "configured_addr")
+        print(f"Account #{accid} ({addr}) imported successfully.")
