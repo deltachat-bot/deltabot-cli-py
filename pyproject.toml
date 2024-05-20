@@ -41,6 +41,9 @@ dev = [
 [tool.setuptools_scm]
 # can be empty if no extra settings are needed, presence enables setuptools_scm
 
+[tool.setuptools]
+packages = ["deltabot_cli"]
+
 [tool.black]
 line-length = 100
 
