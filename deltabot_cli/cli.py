@@ -331,8 +331,7 @@ def _qr_cmd_for_acc(bot: Bot, accid: int) -> None:
         code = qrcode.QRCode()
         code.add_data(qrdata)
         code.print_ascii(invert=True)
-        fragment = qrdata.split(":", maxsplit=1)[1].replace("#", "&", 1)
-        print(f"https://i.delta.chat/#{fragment}")
+        print(qrdata)
     else:
         bot.logger.error("account not configured")
 
