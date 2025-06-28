@@ -10,7 +10,6 @@ from pathlib import Path
 from threading import Thread
 from typing import Callable, Set, Union
 
-import qrcode
 from appdirs import user_config_dir
 from deltachat2 import Bot, CoreEvent, Event, EventType, IOTransport, JsonRpcError, Rpc
 from deltachat2.events import EventFilter, HookCollection, HookDecorator, RawEvent
@@ -136,7 +135,7 @@ class BotCli:
         import_parser.add_argument("path", help="path to the account backup", type=Path)
 
         self.add_subcommand(_serve_cmd, name="serve")
-        self.add_subcommand(_qr_cmd, name="qr")
+        self.add_subcommand(_link_cmd, name="link")
         self.add_subcommand(_admin_cmd, name="admin")
         self.add_subcommand(_list_cmd, name="list")
         self.add_subcommand(_remove_cmd, name="remove")
@@ -325,27 +324,8 @@ def _config_cmd_for_acc(bot: Bot, accid: int, args: Namespace) -> None:
             print(f"{key}={value!r}")
 
 
-def _qr_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
-    """get bot's verification QR"""
-    if args.account:
-        accounts = [cli.get_account(bot.rpc, args.account)]
-        if not accounts[0]:
-            bot.logger.error(f"unknown account: {args.account!r}")
-            sys.exit(1)
-    else:
-        accounts = bot.rpc.get_all_account_ids()
-    for accid in accounts:
-        addr = cli.get_address(bot.rpc, accid)
-        print(f"Account #{accid} ({addr}):")
-        _qr_cmd_for_acc(bot, accid)
-        print("")
-    if not accounts:
-        bot.logger.error("There are no accounts yet, add a new account using the init subcommand")
-        sys.exit(1)
-
-
 def _admin_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
-    """get the invitation link to the bot administration group.
+    """print the invitation link to the bot administration group.
     WARNING: don't share this, anyone joining will become admin of the bot"""
     if args.account:
         accounts = [cli.get_account(bot.rpc, args.account)]
@@ -374,13 +354,29 @@ def _admin_cmd_for_acc(cli: BotCli, bot: Bot, accid: int) -> None:
         bot.logger.error("account not configured")
 
 
-def _qr_cmd_for_acc(bot: Bot, accid: int) -> None:
-    """get bot's verification QR"""
+def _link_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
+    """print the bot's chat invitation link"""
+    if args.account:
+        accounts = [cli.get_account(bot.rpc, args.account)]
+        if not accounts[0]:
+            bot.logger.error(f"unknown account: {args.account!r}")
+            sys.exit(1)
+    else:
+        accounts = bot.rpc.get_all_account_ids()
+    for accid in accounts:
+        addr = cli.get_address(bot.rpc, accid)
+        print(f"Account #{accid} ({addr}):")
+        _link_cmd_for_acc(bot, accid)
+        print("")
+    if not accounts:
+        bot.logger.error("There are no accounts yet, add a new account using the init subcommand")
+        sys.exit(1)
+
+
+def _link_cmd_for_acc(bot: Bot, accid: int) -> None:
+    """print the bot's chat invitation link for the given account"""
     if bot.rpc.is_configured(accid):
-        qrdata, _ = bot.rpc.get_chat_securejoin_qr_code_svg(accid, None)
-        code = qrcode.QRCode()
-        code.add_data(qrdata)
-        code.print_ascii(invert=True)
+        qrdata = bot.rpc.get_chat_securejoin_qr_code(accid, None)
         print(qrdata)
     else:
         bot.logger.error("account not configured")
