@@ -137,6 +137,7 @@ class BotCli:
 
         self.add_subcommand(_serve_cmd, name="serve")
         self.add_subcommand(_qr_cmd, name="qr")
+        self.add_subcommand(_admin_cmd, name="admin")
         self.add_subcommand(_list_cmd, name="list")
         self.add_subcommand(_remove_cmd, name="remove")
 
@@ -171,6 +172,25 @@ class BotCli:
         if rpc.is_configured(accid):
             return rpc.get_config(accid, "configured_addr")
         return rpc.get_config(accid, "addr")
+
+    def get_admin_chat(self, rpc: Rpc, accid: int) -> int:
+        """Return the bot administration group.
+        If the account is not configured, zero is returned.
+        """
+        if not rpc.is_configured(accid):
+            return 0
+        chatid = int(rpc.get_config(accid, "ui.admin_chat") or 0)
+        return chatid or self.reset_admin_chat(rpc, accid)
+
+    def reset_admin_chat(self, rpc: Rpc, accid: int) -> int:
+        """Reset the bot administration group and return the new group id.
+        If the account is not configured, zero is returned.
+        """
+        if not rpc.is_configured(accid):
+            return 0
+        chatid = rpc.create_group_chat(accid, "Bot Admins", True)
+        rpc.set_config(accid, "ui.admin_chat", str(chatid))
+        return chatid
 
     def start(self) -> None:
         """Start running the bot and processing incoming messages."""
@@ -322,6 +342,36 @@ def _qr_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     if not accounts:
         bot.logger.error("There are no accounts yet, add a new account using the init subcommand")
         sys.exit(1)
+
+
+def _admin_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
+    """get the invitation link to the bot administration group.
+    WARNING: don't share this, anyone joining will become admin of the bot"""
+    if args.account:
+        accounts = [cli.get_account(bot.rpc, args.account)]
+        if not accounts[0]:
+            bot.logger.error(f"unknown account: {args.account!r}")
+            sys.exit(1)
+    else:
+        accounts = bot.rpc.get_all_account_ids()
+    for accid in accounts:
+        addr = cli.get_address(bot.rpc, accid)
+        print(f"Account #{accid} ({addr}):")
+        _admin_cmd_for_acc(cli, bot, accid)
+        print("")
+    if not accounts:
+        bot.logger.error("There are no accounts yet, add a new account using the init subcommand")
+        sys.exit(1)
+
+
+def _admin_cmd_for_acc(cli: BotCli, bot: Bot, accid: int) -> None:
+    """print bot's admin group invitation for the given account"""
+    if bot.rpc.is_configured(accid):
+        chatid = cli.get_admin_chat(bot.rpc, accid)
+        qrdata = bot.rpc.get_chat_securejoin_qr_code(accid, chatid)
+        print(qrdata)
+    else:
+        bot.logger.error("account not configured")
 
 
 def _qr_cmd_for_acc(bot: Bot, accid: int) -> None:
