@@ -172,6 +172,17 @@ class BotCli:
             return rpc.get_config(accid, "configured_addr")
         return rpc.get_config(accid, "addr")
 
+    def is_admin(self, rpc: Rpc, accid: int, contactid: int) -> bool:
+        """Return True if the contact is an administrator.
+        Administrators are the members of the Administration group.
+        """
+        chatid = self.get_admin_chat(rpc, accid)
+        contacts = rpc.get_chat_contacts(accid, chatid)
+        for contact in contacts:
+            if contactid == contact:
+                return True
+        return False
+
     def get_admin_chat(self, rpc: Rpc, accid: int) -> int:
         """Return the bot administration group.
         If the account is not configured, zero is returned.
