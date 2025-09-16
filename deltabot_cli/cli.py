@@ -8,7 +8,7 @@ import time
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from threading import Thread
-from typing import Callable, Set, Union
+from typing import Callable, List, Set, Union
 
 from appdirs import user_config_dir
 from deltachat2 import Bot, CoreEvent, Event, EventType, IOTransport, JsonRpcError, Rpc
@@ -108,8 +108,9 @@ class BotCli:
         self.add_generic_option(
             "--account",
             "-a",
-            help="operate only over the given account when running any subcommand",
-            metavar="ADDR",
+            help="operate only over the profile with the given ID when running any subcommand",
+            metavar="ID",
+            type=int,
         )
         choices = ["debug", "info", "warning", "error"]
         assert (
@@ -124,8 +125,18 @@ class BotCli:
         )
 
         init_parser = self.add_subcommand(_init_cmd, name="init")
-        init_parser.add_argument("addr", help="the e-mail address to use")
-        init_parser.add_argument("password", help="account password")
+        init_parser.add_argument(
+            "addr",
+            help=(
+                "the e-mail address to use or a DCACCOUNT URI ex."
+                " DCACCOUNT:https://nine.testrun.org/new"
+            ),
+        )
+        init_parser.add_argument(
+            "password",
+            nargs="?",
+            help="account password, this field is required only if addr is not a DCACCOUNT URI",
+        )
 
         config_parser = self.add_subcommand(_config_cmd, name="config")
         config_parser.add_argument("option", help="option name", nargs="?")
@@ -145,32 +156,6 @@ class BotCli:
         if not os.path.exists(args.config_dir):
             os.makedirs(args.config_dir)
         return os.path.join(args.config_dir, "accounts")
-
-    def get_or_create_account(self, rpc: Rpc, addr: str) -> int:
-        """Get account for address, if no account exists create a new one."""
-        accid = self.get_account(rpc, addr)
-        if not accid:
-            accid = rpc.add_account()
-            rpc.set_config(accid, "addr", addr)
-        return accid
-
-    def get_account(self, rpc: Rpc, addr: str) -> int:
-        """Get account id for address.
-        If no account exists with the given address, zero is returned.
-        """
-        try:
-            return int(addr)
-        except ValueError:
-            for accid in rpc.get_all_account_ids():
-                if addr == self.get_address(rpc, accid):
-                    return accid
-
-        return 0
-
-    def get_address(self, rpc: Rpc, accid: int) -> str:
-        if rpc.is_configured(accid):
-            return rpc.get_config(accid, "configured_addr")
-        return rpc.get_config(accid, "addr")
 
     def is_admin(self, rpc: Rpc, accid: int, contactid: int) -> bool:
         """Return True if the contact is an administrator.
@@ -228,37 +213,41 @@ class BotCli:
 def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:  # noqa: C901
     """initialize the account"""
 
-    def configure() -> None:
-        try:
-            bot.configure(accid, email=args.addr, password=args.password)
-        except JsonRpcError as err:
-            bot.logger.error(err)
+    def process_events() -> None:
+        events = (EventType.INFO, EventType.WARNING, EventType.ERROR)
+        while True:
+            raw_event = bot.rpc.get_next_event()
+            accid = raw_event.context_id
+            event = CoreEvent(raw_event.event)
+            if event.kind == EventType.CONFIGURE_PROGRESS:
+                if event.comment:
+                    bot.logger.info(event.comment)
+                pbar.set_progress(event.progress)
+            elif event.kind in events:
+                bot._on_event(Event(accid, event), RawEvent)  # noqa: access to protected field
+            if pbar.progress in (-1, pbar.total):
+                break
 
     if args.account:
-        accid = cli.get_account(bot.rpc, args.account)
-        if not accid:
-            bot.logger.error(f"unknown account: {args.account!r}")
-            sys.exit(1)
+        accid = args.account
     else:
-        accid = cli.get_or_create_account(bot.rpc, args.addr)
+        accid = bot.rpc.add_account()
 
     bot.logger.info("Starting configuration process...")
-    task = Thread(target=configure, daemon=True)
-    task.start()
+    bot.rpc.set_config(accid, "bot", "1")
     pbar = ConfigProgressBar()
-    while True:
-        raw_event = bot.rpc.get_next_event()
-        accid = raw_event.context_id
-        event = CoreEvent(raw_event.event)
-        if event.kind == EventType.CONFIGURE_PROGRESS:
-            if event.comment:
-                bot.logger.info(event.comment)
-            pbar.set_progress(event.progress)
-        elif event.kind in (EventType.INFO, EventType.WARNING, EventType.ERROR):
-            bot._on_event(Event(accid, event), RawEvent)  # noqa: access to protected field
-        if pbar.progress in (-1, pbar.total):
-            break
-    task.join()
+    task = Thread(target=process_events, daemon=True)
+    task.start()
+    try:
+        if not args.password:
+            bot.rpc.add_transport_from_qr(accid, args.addr)
+        else:
+            params = {"addr": args.addr, "password": args.password}
+            bot.rpc.add_or_update_transport(accid, params)
+        task.join()
+    except JsonRpcError as err:
+        bot.logger.error(err)
+        pbar.progress = -1
     pbar.close()
     if pbar.progress == -1:
         bot.logger.error("Configuration failed.")
@@ -267,20 +256,23 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:  # noqa: C901
         bot.logger.info("Account configured successfully.")
 
 
+def _get_addresses(rpc: Rpc, accid: int) -> List[str]:
+    transports = rpc.list_transports(accid)
+    return [params["addr"] for params in transports]
+
+
 def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     """start processing messages"""
     rpc = bot.rpc
     if args.account:
-        accounts = [cli.get_account(rpc, args.account)]
-        if not accounts[0]:
-            bot.logger.error(f"unknown account: {args.account!r}")
-            sys.exit(1)
+        accounts = [args.account]
     else:
         accounts = rpc.get_all_account_ids()
     addrs = []
     for accid in accounts:
-        if rpc.is_configured(accid):
-            addrs.append(rpc.get_config(accid, "configured_addr"))
+        addrs2 = _get_addresses(bot.rpc, accid)
+        if addrs2:
+            addrs.extend(addrs2)
         else:
             bot.logger.error(f"account {accid} not configured")
     if len(addrs) != 0:
@@ -299,18 +291,14 @@ def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         sys.exit(1)
 
 
-def _config_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
+def _config_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
     """set/get account configuration values"""
     if args.account:
-        accounts = [cli.get_account(bot.rpc, args.account)]
-        if not accounts[0]:
-            bot.logger.error(f"unknown account: {args.account!r}")
-            sys.exit(1)
+        accounts = [args.account]
     else:
         accounts = bot.rpc.get_all_account_ids()
     for accid in accounts:
-        addr = cli.get_address(bot.rpc, accid)
-        print(f"Account #{accid} ({addr}):")
+        print(f"Account #{accid}:")
         _config_cmd_for_acc(bot, accid, args)
         print("")
     if not accounts:
@@ -339,15 +327,11 @@ def _admin_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     """print the invitation link to the bot administration group.
     WARNING: don't share this, anyone joining will become admin of the bot"""
     if args.account:
-        accounts = [cli.get_account(bot.rpc, args.account)]
-        if not accounts[0]:
-            bot.logger.error(f"unknown account: {args.account!r}")
-            sys.exit(1)
+        accounts = [args.account]
     else:
         accounts = bot.rpc.get_all_account_ids()
     for accid in accounts:
-        addr = cli.get_address(bot.rpc, accid)
-        print(f"Account #{accid} ({addr}):")
+        print(f"Account #{accid}:")
         _admin_cmd_for_acc(cli, bot, accid)
         print("")
     if not accounts:
@@ -365,18 +349,14 @@ def _admin_cmd_for_acc(cli: BotCli, bot: Bot, accid: int) -> None:
         bot.logger.error("account not configured")
 
 
-def _link_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
+def _link_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
     """print the bot's chat invitation link"""
     if args.account:
-        accounts = [cli.get_account(bot.rpc, args.account)]
-        if not accounts[0]:
-            bot.logger.error(f"unknown account: {args.account!r}")
-            sys.exit(1)
+        accounts = [args.account]
     else:
         accounts = bot.rpc.get_all_account_ids()
     for accid in accounts:
-        addr = cli.get_address(bot.rpc, accid)
-        print(f"Account #{accid} ({addr}):")
+        print(f"Account #{accid}:")
         _link_cmd_for_acc(bot, accid)
         print("")
     if not accounts:
@@ -393,38 +373,34 @@ def _link_cmd_for_acc(bot: Bot, accid: int) -> None:
         bot.logger.error("account not configured")
 
 
-def _list_cmd(cli: BotCli, bot: Bot, _args: Namespace) -> None:
+def _list_cmd(_cli: BotCli, bot: Bot, _args: Namespace) -> None:
     """show a list of existing bot accounts"""
     rpc = bot.rpc
     accounts = rpc.get_all_account_ids()
     for accid in accounts:
-        addr = cli.get_address(rpc, accid)
-        if not rpc.is_configured(accid):
-            addr = f"{addr or ''} (not configured)"
-        print(f"#{accid} - {addr}")
+        addrs = _get_addresses(bot.rpc, accid)
+        info = ", ".join(addrs) or "(not configured)"
+        print(f"#{accid} - {info}")
 
 
-def _remove_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
+def _remove_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
     """remove Delta Chat accounts from the bot"""
     if args.account:
-        accid = cli.get_account(bot.rpc, args.account)
-        if not accid:
-            bot.logger.error(f"unknown account: {args.account!r}")
-            sys.exit(1)
+        accounts = [args.account]
     else:
         accounts = bot.rpc.get_all_account_ids()
-        if len(accounts) == 1:
-            accid = accounts[0]
-        else:
-            bot.logger.error(
-                "There are more than one account, to remove one of them, pass the account"
-                " address with -a/--account option"
-            )
-            sys.exit(1)
 
-    addr = cli.get_address(bot.rpc, accid)
+    if len(accounts) == 1:
+        accid = accounts[0]
+    else:
+        bot.logger.error(
+            "There are more than one account, to remove one of them, pass the account"
+            " address with -a/--account option"
+        )
+        sys.exit(1)
+
     bot.rpc.remove_account(accid)
-    print(f"Account #{accid} ({addr}) removed successfully.")
+    print(f"Account #{accid} removed successfully.")
 
 
 def _import_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
