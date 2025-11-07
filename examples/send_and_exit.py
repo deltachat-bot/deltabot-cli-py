@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""An example bot that just sends a message and exits, without needing to be running all the time.
+This useful, for example, for bots that are used only to send notifications/alerts,
+and are integrated into other systems that would run the bot command with data parameters
+every time there is a message to be sent.
+"""
 from argparse import Namespace
 
 from deltachat2 import Bot, EventType, MsgData, events
@@ -18,7 +23,7 @@ def log_event(bot: Bot, _accid: int, event) -> None:
         bot.logger.error(event.msg)
 
 
-def send(cli: BotCli, bot: Bot, args: Namespace) -> None:
+def send(_cli: BotCli, bot: Bot, args: Namespace) -> None:
     """send a message"""
     accid = bot.rpc.get_all_account_ids()[0]
 
