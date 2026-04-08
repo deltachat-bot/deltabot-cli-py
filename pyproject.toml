@@ -7,10 +7,10 @@ name = "deltabot-cli"
 description = "Library to speedup Delta Chat bot development"
 dynamic = ["version"]
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 keywords = ["deltachat", "bot", "deltabot-cli"]
 authors = [
-  {name = "adbenitez", email = "adb@merlinux.eu"},
+  {name = "adbenitez", email = "adb@arcanechat.me"},
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
