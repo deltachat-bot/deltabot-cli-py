@@ -8,7 +8,7 @@ import time
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from threading import Thread
-from typing import Callable, List, Set, Union
+from typing import Callable, Union
 
 from appdirs import user_config_dir
 from deltachat2 import Bot, CoreEvent, Event, EventType, IOTransport, JsonRpcError, Rpc
@@ -35,8 +35,8 @@ class BotCli:
         self._parser = ArgumentParser(app_name)
         self._subparsers = self._parser.add_subparsers(title="subcommands")
         self._hooks = HookCollection()
-        self._init_hooks: Set[CliEventHook] = set()
-        self._start_hooks: Set[CliEventHook] = set()
+        self._init_hooks: set[CliEventHook] = set()
+        self._start_hooks: set[CliEventHook] = set()
         self._bot: Bot
 
     def on(self, event: Union[type, EventFilter]) -> HookDecorator:
@@ -127,10 +127,7 @@ class BotCli:
         init_parser = self.add_subcommand(_init_cmd, name="init")
         init_parser.add_argument(
             "addr",
-            help=(
-                "the e-mail address to use or a DCACCOUNT URI ex."
-                " DCACCOUNT:https://nine.testrun.org/new"
-            ),
+            help=("the e-mail address to use or a DCACCOUNT URI ex. DCACCOUNT:nine.testrun.org"),
         )
         init_parser.add_argument(
             "password",
@@ -149,7 +146,12 @@ class BotCli:
         self.add_subcommand(_link_cmd, name="link")
         self.add_subcommand(_admin_cmd, name="admin")
         self.add_subcommand(_list_cmd, name="list")
-        self.add_subcommand(_remove_cmd, name="remove")
+        remove_parser = self.add_subcommand(_remove_cmd, name="remove")
+        remove_parser.add_argument(
+            "address",
+            help="address to remove, if not provided the whole account is removed",
+            nargs="?",
+        )
 
     def get_accounts_dir(self, args: Namespace) -> str:
         """Get bot's account folder."""
@@ -210,7 +212,7 @@ class BotCli:
                 self._parser.parse_args(["-h"])
 
 
-def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:  # noqa: C901
+def _init_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
     """initialize the account"""
 
     def process_events() -> None:
@@ -224,7 +226,7 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:  # noqa: C901
                     bot.logger.info(event.comment)
                 pbar.set_progress(event.progress)
             elif event.kind in events:
-                bot._on_event(Event(accid, event), RawEvent)  # noqa: access to protected field
+                bot._on_event(Event(accid, event), RawEvent)  # noqa
             if pbar.progress in (-1, pbar.total):
                 break
 
@@ -256,11 +258,6 @@ def _init_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:  # noqa: C901
         bot.logger.info("Account configured successfully.")
 
 
-def _get_addresses(rpc: Rpc, accid: int) -> List[str]:
-    transports = rpc.list_transports(accid)
-    return [params["addr"] for params in transports]
-
-
 def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
     """start processing messages"""
     rpc = bot.rpc
@@ -268,22 +265,22 @@ def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         accounts = [args.account]
     else:
         accounts = rpc.get_all_account_ids()
-    addrs = []
+    configured = False
     for accid in accounts:
-        addrs2 = _get_addresses(bot.rpc, accid)
-        if addrs2:
-            addrs.extend(addrs2)
+        if bot.rpc.is_configured(accid):
+            configured = True
+            link = bot.rpc.get_chat_securejoin_qr_code(accid, None)
+            bot.logger.info(f"Listening at: {link}")
         else:
             bot.logger.error(f"account {accid} not configured")
-    if len(addrs) != 0:
-        bot.logger.info(f"Listening at: {', '.join(addrs)}")
+    if configured:
         cli._on_start(bot, args)  # noqa
         while True:
             try:
                 bot.run_forever(accounts[0] if args.account else 0)
             except KeyboardInterrupt:
                 return
-            except Exception as ex:  # pylint:disable=W0703
+            except Exception as ex:
                 bot.logger.exception(ex)
                 time.sleep(5)
     else:
@@ -378,7 +375,8 @@ def _list_cmd(_cli: BotCli, bot: Bot, _args: Namespace) -> None:
     rpc = bot.rpc
     accounts = rpc.get_all_account_ids()
     for accid in accounts:
-        addrs = _get_addresses(bot.rpc, accid)
+        transports = bot.rpc.list_transports(accid)
+        addrs = [params["addr"] for params in transports]
         info = ", ".join(addrs) or "(not configured)"
         print(f"#{accid} - {info}")
 
@@ -395,12 +393,16 @@ def _remove_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
     else:
         bot.logger.error(
             "There are more than one account, to remove one of them, pass the account"
-            " address with -a/--account option"
+            " id with -a/--account option"
         )
         sys.exit(1)
 
-    bot.rpc.remove_account(accid)
-    print(f"Account #{accid} removed successfully.")
+    if args.address:
+        bot.rpc.delete_transport(accid, args.address)
+        print(f"Account #{accid}: removed address {args.address}")
+    else:
+        bot.rpc.remove_account(accid)
+        print(f"Account #{accid} removed successfully.")
 
 
 def _import_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
@@ -416,5 +418,4 @@ def _import_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
         bot.logger.exception(ex)
         sys.exit(1)
     else:
-        addr = bot.rpc.get_config(accid, "configured_addr")
-        print(f"Account #{accid} ({addr}) imported successfully.")
+        print(f"Account #{accid} imported successfully.")

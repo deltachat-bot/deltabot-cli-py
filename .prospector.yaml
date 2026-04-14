@@ -1,0 +1,16 @@
+strictness: medium
+test-warnings: true
+doc-warnings: false
+
+ignore-paths:
+  - docs
+  - build
+
+ignore-patterns:
+  - (^|/)skip(this)?(/|$)
+
+mccabe:
+  run: false
+
+mypy:
+  run: true

@@ -19,7 +19,7 @@ classifiers = [
   "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
 ]
 dependencies = [
-    "deltachat2[full]>=0.9.0",
+    "deltachat2[full]>=0.10.0",
     "appdirs>=1.4.4",
     "rich>=12.6.0",
 ]
@@ -30,11 +30,8 @@ Homepage = "https://github.com/deltachat-bot/deltabot-cli-py"
 [project.optional-dependencies]
 dev = [
   "black",
-  "mypy",
   "isort",
-  "pylint",
-  "pylama",
-  "pytest",
+  "prospector[with-mypy]",
 ]
 
 [tool.setuptools_scm]
