@@ -246,7 +246,6 @@ def _ensure_one_acc(bot: Bot, args: Namespace) -> int:
         "There is more than one account, please provide an account id with -a/--account option"
     )
     sys.exit(1)
-    return 0
 
 
 def _init_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
