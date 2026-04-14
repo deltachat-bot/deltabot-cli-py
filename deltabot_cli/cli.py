@@ -150,6 +150,15 @@ class BotCli:
         import_parser = self.add_subcommand(_import_cmd, name="import")
         import_parser.add_argument("path", help="path to the account backup", type=Path)
 
+        export_parser = self.add_subcommand(_export_cmd, name="export")
+        export_parser.add_argument(
+            "folder",
+            help="folder where the backup will be exported to",
+            type=Path,
+            default=Path(),
+            nargs="?",
+        )
+
         self.add_subcommand(_serve_cmd, name="serve")
         self.add_subcommand(_link_cmd, name="link")
         self.add_subcommand(_admin_cmd, name="admin")
@@ -218,6 +227,21 @@ class BotCli:
                 args.cmd(self, self._bot, args)
             else:
                 self._parser.parse_args(["-h"])
+
+
+def _ensure_one_acc(bot: Bot, args: Namespace) -> int:
+    if args.account:
+        accounts = [args.account]
+    else:
+        accounts = bot.rpc.get_all_account_ids()
+
+    if len(accounts) == 1:
+        return accounts[0]
+    bot.logger.error(
+        "There is more than one account, please provide an account id with -a/--account option"
+    )
+    sys.exit(1)
+    return 0
 
 
 def _init_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
@@ -391,19 +415,7 @@ def _list_cmd(_cli: BotCli, bot: Bot, _args: Namespace) -> None:
 
 def _remove_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
     """remove Delta Chat accounts from the bot"""
-    if args.account:
-        accounts = [args.account]
-    else:
-        accounts = bot.rpc.get_all_account_ids()
-
-    if len(accounts) == 1:
-        accid = accounts[0]
-    else:
-        bot.logger.error(
-            "There are more than one account, to remove one of them, pass the account"
-            " id with -a/--account option"
-        )
-        sys.exit(1)
+    accid = _ensure_one_acc(bot, args)
 
     if args.address:
         bot.rpc.delete_transport(accid, args.address)
@@ -427,3 +439,20 @@ def _import_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
         sys.exit(1)
     else:
         print(f"Account #{accid} imported successfully.")
+
+
+def _export_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
+    """export account backup"""
+    accid = _ensure_one_acc(bot, args)
+
+    if not args.folder.exists():
+        bot.logger.error(f"folder doesn't exist: {str(args.folder)!r}")
+        sys.exit(1)
+
+    try:
+        bot.rpc.export_backup(accid, str(args.folder), None)
+    except JsonRpcError as ex:
+        bot.logger.exception(ex)
+        sys.exit(1)
+    else:
+        print(f"Account #{accid} exported successfully.")
