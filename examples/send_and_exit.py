@@ -4,6 +4,7 @@ This useful, for example, for bots that are used only to send notifications/aler
 and are integrated into other systems that would run the bot command with data parameters
 every time there is a message to be sent.
 """
+
 from argparse import Namespace
 
 from deltachat2 import Bot, EventType, MsgData, events
