@@ -194,7 +194,12 @@ class BotCli:
         if not rpc.is_configured(accid):
             return 0
         chatid = int(rpc.get_config(accid, "ui.admin_chat") or 0)
-        return chatid if rpc.can_send(accid, chatid) else self.reset_admin_chat(rpc, accid)
+        try:
+            if rpc.can_send(accid, chatid):
+                return chatid
+        except JsonRpcError:
+            pass
+        return self.reset_admin_chat(rpc, accid)
 
     def reset_admin_chat(self, rpc: Rpc, accid: int) -> int:
         """Reset the bot administration group and return the new group id.
