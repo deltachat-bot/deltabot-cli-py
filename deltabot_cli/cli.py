@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 import time
-from argparse import ArgumentParser, Namespace
+from argparse import SUPPRESS, ArgumentParser, Namespace
 from pathlib import Path
 from threading import Thread
 from typing import Callable, Union
@@ -80,7 +80,9 @@ class BotCli:
         """
         if not (flags and flags[0].startswith("-")):
             raise ValueError("can not generically add positional args")
-        self._base_parser.add_argument(*flags, **kwargs)
+        base_kwargs = dict(kwargs)
+        base_kwargs["default"] = SUPPRESS
+        self._base_parser.add_argument(*flags, **base_kwargs)
         self._parser.add_argument(*flags, **kwargs)
 
     def add_subcommand(
