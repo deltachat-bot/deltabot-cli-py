@@ -32,7 +32,7 @@ class BotCli:
     def __init__(self, app_name: str, log_level: str = "info") -> None:
         self.app_name = app_name
         self.log_level = log_level
-        self._base_parser = ArgumentParser(add_help=False)
+        self._base_parser = ArgumentParser(add_help=False, argument_default=SUPPRESS)
         self._parser = ArgumentParser(app_name)
         self._subparsers = self._parser.add_subparsers(title="subcommands")
         self._hooks = HookCollection()
@@ -82,7 +82,7 @@ class BotCli:
         """
         if not (flags and flags[0].startswith("-")):
             raise ValueError("can not generically add positional args")
-        self._base_parser.add_argument(*flags, **{**kwargs, "default": SUPPRESS})
+        self._base_parser.add_argument(*flags, **kwargs)
         self._parser.add_argument(*flags, **kwargs)
 
     def add_subcommand(
