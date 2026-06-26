@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 import time
-from argparse import SUPPRESS, ArgumentParser, Namespace
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from threading import Thread
 from typing import Callable, Union
@@ -29,18 +29,16 @@ class BotCli:
     Start running the bot with `start()`.
     """
 
-    def __init__(self, app_name: str, log_level: str = "info") -> None:
+    def __init__(self, app_name: str, log_level: str = "info", add_defaults=True) -> None:
         self.app_name = app_name
         self.log_level = log_level
-        self._base_parser = ArgumentParser(add_help=False, argument_default=SUPPRESS)
         self._parser = ArgumentParser(app_name)
         self._subparsers = self._parser.add_subparsers(title="subcommands")
+        self._add_defaults = add_defaults
         self._hooks = HookCollection()
         self._init_hooks: set[CliEventHook] = set()
         self._start_hooks: set[CliEventHook] = set()
         self._bot: Bot
-
-        self._add_default_generic_options()
 
     def on(self, event: Union[type, EventFilter]) -> HookDecorator:
         """Register decorated function as listener for the given event."""
@@ -75,14 +73,9 @@ class BotCli:
             func(bot, args)
 
     def add_generic_option(self, *flags, **kwargs) -> None:
-        """Add a generic argument option to the CLI.
-
-        For the generic option to be usable also after a subcommand,
-        it must be registered before any subcommand.
-        """
+        """Add a generic argument option to the CLI."""
         if not (flags and flags[0].startswith("-")):
             raise ValueError("can not generically add positional args")
-        self._base_parser.add_argument(*flags, **kwargs)
         self._parser.add_argument(*flags, **kwargs)
 
     def add_subcommand(
@@ -95,7 +88,7 @@ class BotCli:
             kwargs["name"] = func.__name__
         if not kwargs.get("help") and not kwargs.get("description"):
             kwargs["help"], kwargs["description"] = parse_docstring(func.__doc__)
-        subparser = self._subparsers.add_parser(**{**kwargs, "parents": [self._base_parser]})
+        subparser = self._subparsers.add_parser(**kwargs)
         subparser.set_defaults(cmd=func)
         return subparser
 
@@ -129,7 +122,8 @@ class BotCli:
         )
 
     def _init_parser(self) -> None:
-        """Add some default subcommands."""
+        """Add some default subcommands and generic options."""
+        self._add_default_generic_options()
         init_parser = self.add_subcommand(_init_cmd, name="init")
         init_parser.add_argument(
             "addr",
@@ -211,7 +205,8 @@ class BotCli:
 
     def start(self) -> None:
         """Start running the bot and processing incoming messages."""
-        self._init_parser()
+        if self._add_defaults:
+            self._init_parser()
         args = self._parser.parse_args()
         log_level = int(getattr(logging, args.logging.upper()))
         logger = logging.Logger(self.app_name, log_level)
