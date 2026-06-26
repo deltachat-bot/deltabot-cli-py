@@ -30,7 +30,7 @@ def send(_cli: BotCli, bot: Bot, args: Namespace) -> None:
 
     # first fetch incoming messages to have updated chats state
     bot.logger.info("first syncing chats state...")
-    bot.rpc.accounts_background_fetch(60)
+    bot.rpc.background_fetch(60)
 
     bot.logger.info("sending message...")
     chatid = cli.get_admin_chat(bot.rpc, accid)
