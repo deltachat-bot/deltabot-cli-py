@@ -11,7 +11,18 @@ from threading import Thread
 from typing import Callable, Union
 
 from appdirs import user_config_dir
-from deltachat2 import Bot, CoreEvent, Event, EventType, IOTransport, JsonRpcError, Rpc
+from deltachat2 import (
+    Bot,
+    EnteredLoginParam,
+    Event,
+    EventTypeConfigureProgress,
+    EventTypeError,
+    EventTypeInfo,
+    EventTypeWarning,
+    IOTransport,
+    JsonRpcError,
+    Rpc,
+)
 from deltachat2.events import EventFilter, HookCollection, HookDecorator, RawEvent
 from rich.logging import RichHandler
 
@@ -219,7 +230,7 @@ class BotCli:
             self._bot = Bot(rpc, self._hooks, logger)
             self._on_init(self._bot, args)
 
-            core_version = rpc.get_system_info().deltachat_core_version
+            core_version = rpc.get_system_info()["deltachat_core_version"]
             self._bot.logger.debug("Running deltachat core %s", core_version)
             if "cmd" in args:
                 args.cmd(self, self._bot, args)
@@ -245,17 +256,17 @@ def _init_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
     """initialize the account"""
 
     def process_events() -> None:
-        events = (EventType.INFO, EventType.WARNING, EventType.ERROR)
+        events = (EventTypeInfo, EventTypeWarning, EventTypeError)
         while True:
             raw_event = bot.rpc.get_next_event()
             accid = raw_event.context_id
-            event = CoreEvent(raw_event.event)
-            if event.kind == EventType.CONFIGURE_PROGRESS:
+            event = raw_event.event
+            if isinstance(event, EventTypeConfigureProgress):
                 if event.comment:
                     bot.logger.info(event.comment)
                 pbar.set_progress(event.progress)
-            elif event.kind in events:
-                bot._on_event(Event(accid, event), RawEvent)  # noqa
+            elif type(event) in events:
+                bot._on_event(Event(context_id=accid, event=event), RawEvent)  # noqa
             if pbar.progress in (-1, pbar.total):
                 break
 
@@ -273,7 +284,7 @@ def _init_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
         if not args.password:
             bot.rpc.add_transport_from_qr(accid, args.addr)
         else:
-            params = {"addr": args.addr, "password": args.password}
+            params = EnteredLoginParam(addr=args.addr, password=args.password)
             bot.rpc.add_or_update_transport(accid, params)
         task.join()
     except JsonRpcError as err:
@@ -405,7 +416,7 @@ def _list_cmd(_cli: BotCli, bot: Bot, _args: Namespace) -> None:
     accounts = rpc.get_all_account_ids()
     for accid in accounts:
         transports = bot.rpc.list_transports(accid)
-        addrs = [params["addr"] for params in transports]
+        addrs = [params.addr for params in transports]
         info = ", ".join(addrs) or "(not configured)"
         print(f"#{accid} - {info}")
 

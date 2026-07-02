@@ -7,7 +7,15 @@ every time there is a message to be sent.
 
 from argparse import Namespace
 
-from deltachat2 import Bot, EventType, MsgData, events
+from deltachat2 import (
+    Bot,
+    EventType,
+    EventTypeError,
+    EventTypeInfo,
+    EventTypeWarning,
+    MessageData,
+    events,
+)
 
 from deltabot_cli import BotCli
 
@@ -16,12 +24,13 @@ cli = BotCli("sendbot")
 
 @cli.on(events.RawEvent)
 def log_event(bot: Bot, _accid: int, event) -> None:
-    if event.kind == EventType.INFO:
-        bot.logger.debug(event.msg)
-    elif event.kind == EventType.WARNING:
-        bot.logger.warning(event.msg)
-    elif event.kind == EventType.ERROR:
-        bot.logger.error(event.msg)
+    match event:
+        case EventTypeInfo():
+            bot.logger.debug(event.msg)
+        case EventTypeWarning():
+            bot.logger.warning(event.msg)
+        case EventTypeError():
+            bot.logger.error(event.msg)
 
 
 def send(_cli: BotCli, bot: Bot, args: Namespace) -> None:
@@ -34,7 +43,7 @@ def send(_cli: BotCli, bot: Bot, args: Namespace) -> None:
 
     bot.logger.info("sending message...")
     chatid = cli.get_admin_chat(bot.rpc, accid)
-    msgid = bot.rpc.send_msg(accid, chatid, MsgData(text=args.text, file=args.file))
+    msgid = bot.rpc.send_msg(accid, chatid, MessageData(text=args.text, file=args.file))
     bot.run_until(
         lambda ev: ev.event.kind in (EventType.MSG_DELIVERED, EventType.MSG_FAILED)
         and ev.event.msg_id == msgid

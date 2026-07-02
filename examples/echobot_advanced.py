@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """Advanced echo bot example."""
 
-from deltachat2 import EventType, MsgData, events
+from deltachat2 import (
+    EventTypeError,
+    EventTypeInfo,
+    EventTypeMsgDelivered,
+    EventTypeSecurejoinInviterProgress,
+    EventTypeWarning,
+    MessageData,
+    events,
+)
 
 from deltabot_cli import BotCli
 
@@ -28,26 +36,27 @@ def on_start(bot, _args):
 
 @cli.on(events.RawEvent)
 def log_event(bot, accid, event):
-    if event.kind == EventType.INFO:
-        bot.logger.debug(event.msg)
-    elif event.kind == EventType.WARNING:
-        bot.logger.warning(event.msg)
-    elif event.kind == EventType.ERROR:
-        bot.logger.error(event.msg)
-    elif event.kind == EventType.MSG_DELIVERED:
-        bot.rpc.delete_messages(accid, [event.msg_id])
-    elif event.kind == EventType.SECUREJOIN_INVITER_PROGRESS:
-        if event.progress == 1000 and not bot.rpc.get_contact(accid, event.contact_id).is_bot:
-            # bot's QR scanned by an user, send introduction message
-            chatid = bot.rpc.create_chat_by_contact_id(accid, event.contact_id)
-            reply = MsgData(text="Hi, I will repeat anything you say to me")
-            bot.rpc.send_msg(accid, chatid, reply)
+    match event:
+        case EventTypeInfo():
+            bot.logger.debug(event.msg)
+        case EventTypeWarning():
+            bot.logger.warning(event.msg)
+        case EventTypeError():
+            bot.logger.error(event.msg)
+        case EventTypeMsgDelivered():
+            bot.rpc.delete_messages(accid, [event.msg_id])
+        case EventTypeSecurejoinInviterProgress():
+            if event.progress == 1000 and not bot.rpc.get_contact(accid, event.contact_id).is_bot:
+                # bot's QR scanned by an user, send introduction message
+                chatid = bot.rpc.create_chat_by_contact_id(accid, event.contact_id)
+                reply = MessageData(text="Hi, I will repeat anything you say to me")
+                bot.rpc.send_msg(accid, chatid, reply)
 
 
 @cli.on(events.NewMessage(command="/help"))
 def _help(bot, accid, event):
     msg = event.msg
-    bot.rpc.send_msg(accid, msg.chat_id, MsgData(text="I will repeat anything you say to me"))
+    bot.rpc.send_msg(accid, msg.chat_id, MessageData(text="I will repeat anything you say to me"))
 
 
 @cli.on(events.NewMessage(is_info=False))
@@ -55,7 +64,7 @@ def echo(bot, accid, event):
     if bot.has_command(event.command):
         return
     msg = event.msg
-    bot.rpc.send_msg(accid, msg.chat_id, MsgData(text=msg.text))
+    bot.rpc.send_msg(accid, msg.chat_id, MessageData(text=msg.text))
 
 
 @cli.after(events.NewMessage)

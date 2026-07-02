@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Minimal echo-bot example."""
 
-from deltachat2 import MsgData, events
+from deltachat2 import MessageData, events
 
 from deltabot_cli import BotCli
 
@@ -17,7 +17,7 @@ def log_event(bot, accid, event):
 def echo(bot, accid, event):
     msg = event.msg
     bot.logger.info(f"received message: {msg.text!r}")
-    bot.rpc.send_msg(accid, msg.chat_id, MsgData(text=msg.text))
+    bot.rpc.send_msg(accid, msg.chat_id, MessageData(text=msg.text))
 
 
 if __name__ == "__main__":
