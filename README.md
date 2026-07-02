@@ -1,4 +1,4 @@
-# deltabot-cli for Python
+# <img src="https://github.com/deltachat-bot/deltabot-cli-py/raw/main/docs/logo.svg" width="32px"> deltabot-cli for Python
 
 [![Latest Release](https://img.shields.io/pypi/v/deltabot-cli.svg)](https://pypi.org/project/deltabot-cli)
 [![CI](https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml/badge.svg)](https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml)
@@ -41,4 +41,4 @@ if __name__ == "__main__":
 If you run the above script you will have a bot CLI, that allows to configure and run a bot.
 A progress bar is displayed while the bot is configuring, and logs are pretty-printed.
 
-For more examples check the [examples](./examples) folder.
+For more examples check the [examples](https://github.com/deltachat-bot/deltabot-cli-py/blob/main/examples) folder.

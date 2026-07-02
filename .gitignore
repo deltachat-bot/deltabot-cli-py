@@ -8,6 +8,7 @@ dist
 .eggs
 *.egg-info
 */_version.py
+docs/_build
 
 *~
 .#*
