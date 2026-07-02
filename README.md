@@ -20,7 +20,7 @@ pip install deltabot-cli
 Example echo-bot written with deltabot-cli:
 
 ```python
-from deltachat2 import MsgData, events
+from deltachat2 import MessageData, events
 from deltabot_cli import BotCli
 
 cli = BotCli("echobot")
@@ -32,7 +32,7 @@ def log_event(bot, accid, event):
 @cli.on(events.NewMessage)
 def echo(bot, accid, event):
     msg = event.msg
-    bot.rpc.send_msg(accid, msg.chat_id, MsgData(text=msg.text))
+    bot.rpc.send_msg(accid, msg.chat_id, MessageData(text=msg.text))
 
 if __name__ == "__main__":
     cli.start()
