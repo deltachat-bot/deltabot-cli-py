@@ -32,6 +32,8 @@ dev = [
   "black",
   "isort",
   "prospector[with-mypy]",
+]
+docs = [
   "Sphinx>=9.1.0",
 ]
 
