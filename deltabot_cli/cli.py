@@ -173,12 +173,6 @@ class BotCli:
             nargs="?",
         )
 
-    def get_accounts_dir(self, args: Namespace) -> str:
-        """Get bot's account folder."""
-        if not os.path.exists(args.config_dir):
-            os.makedirs(args.config_dir)
-        return os.path.join(args.config_dir, "accounts")
-
     def is_admin(self, rpc: Rpc, accid: int, contactid: int) -> bool:
         """Return True if the contact is an administrator.
         Administrators are the members of the Administration group.
@@ -222,7 +216,10 @@ class BotCli:
         log_level = int(getattr(logging, args.logging.upper()))
         logger = logging.Logger(self.app_name, log_level)
         logger.handlers = [RichHandler(show_path=False, omit_repeated_times=False)]
-        accounts_dir = self.get_accounts_dir(args)
+
+        if not os.path.exists(args.config_dir):
+            os.makedirs(args.config_dir)
+        accounts_dir = os.path.join(args.config_dir, "accounts")
 
         kwargs = {"stderr": subprocess.DEVNULL} if log_level > logging.DEBUG else {}
         with IOTransport(accounts_dir=accounts_dir, **kwargs) as trans:
