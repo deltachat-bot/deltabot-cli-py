@@ -1,4 +1,4 @@
-# <img src="https://github.com/deltachat-bot/deltabot-cli-py/raw/main/docs/_static/logo.svg" width="32px"> deltabot-cli for Python
+# <img src="https://github.com/deltachat-bot/deltabot-cli-py/raw/main/docs/icon.png" width="32px"> deltabot-cli for Python
 
 [![Latest Release](https://img.shields.io/pypi/v/deltabot-cli.svg)](https://pypi.org/project/deltabot-cli)
 [![CI](https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml/badge.svg)](https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml)
