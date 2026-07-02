@@ -1,6 +1,6 @@
 .. title:: deltabot-cli Documentation
 
-.. image:: _static/logo+text.svg
+.. image:: _static/logo.svg
    :align: center
    :width: 80%
 
