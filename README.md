@@ -1,8 +1,17 @@
-# <img src="https://github.com/deltachat-bot/deltabot-cli-py/raw/main/docs/icon.png" width="32px"> deltabot-cli for Python
+<p align="center"><img height="150px" width="auto" src="https://github.com/deltachat-bot/deltabot-cli-py/raw/main/docs/_static/logo.svg"></p>
+<h1 align="center">deltabot-cli for Python</h1>
 
-[![Latest Release](https://img.shields.io/pypi/v/deltabot-cli.svg)](https://pypi.org/project/deltabot-cli)
-[![CI](https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml/badge.svg)](https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+<p align="center">
+  <a href="https://pypi.org/project/deltabot-cli">
+    <img src="https://img.shields.io/pypi/v/deltabot-cli.svg" alt="Latest Release">
+  </a>
+  <a href="https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml">
+    <img src="https://github.com/deltachat-bot/deltabot-cli-py/actions/workflows/python-ci.yml/badge.svg" alt="CI">
+  </a>
+  <a href="https://github.com/psf/black">
+    <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code style: black">
+  </a>
+</p>
 
 Library to speedup Delta Chat bot development.
 
