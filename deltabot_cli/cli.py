@@ -8,7 +8,7 @@ import time
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from threading import Thread
-from typing import Callable, Union
+from typing import Any, Callable, Union
 
 from appdirs import user_config_dir
 from deltachat2 import (
@@ -221,7 +221,7 @@ class BotCli:
             os.makedirs(args.config_dir)
         accounts_dir = os.path.join(args.config_dir, "accounts")
 
-        kwargs = {"stderr": subprocess.DEVNULL} if log_level > logging.DEBUG else {}
+        kwargs: dict[str, Any] = {"stderr": subprocess.DEVNULL} if log_level > logging.DEBUG else {}
         with IOTransport(accounts_dir=accounts_dir, **kwargs) as trans:
             rpc = Rpc(trans)
             self._bot = Bot(rpc, self._hooks, logger)
@@ -263,7 +263,10 @@ def _init_cmd(_cli: BotCli, bot: Bot, args: Namespace) -> None:
                     bot.logger.info(event.comment)
                 pbar.set_progress(event.progress)
             elif type(event) in events:
-                bot._on_event(Event(context_id=accid, event=event), RawEvent)  # noqa
+                bot._on_event(  # pylint: disable=protected-access
+                    Event(context_id=accid, event=event),
+                    RawEvent,
+                )
             if pbar.progress in (-1, pbar.total):
                 break
 
@@ -311,13 +314,13 @@ def _serve_cmd(cli: BotCli, bot: Bot, args: Namespace) -> None:
         else:
             bot.logger.error(f"account {accid} not configured")
     if configured:
-        cli._on_start(bot, args)  # noqa
+        cli._on_start(bot, args)  # pylint: disable=protected-access
         while True:
             try:
                 bot.run_forever(accounts[0] if args.account else 0)
             except KeyboardInterrupt:
                 return
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=broad-exception-caught
                 bot.logger.exception(ex)
                 time.sleep(5)
     else:

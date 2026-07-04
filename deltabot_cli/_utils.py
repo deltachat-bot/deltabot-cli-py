@@ -23,7 +23,7 @@ class ConfigProgressBar:
 
     def close(self) -> None:
         """Finish the progress bar"""
-        self.tracker.close()
+        self.tracker.close()  # type: ignore[attr-defined]
 
 
 def parse_docstring(txt) -> tuple:

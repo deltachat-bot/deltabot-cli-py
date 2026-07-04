@@ -12,6 +12,8 @@ from deltachat2 import (
     EventType,
     EventTypeError,
     EventTypeInfo,
+    EventTypeMsgDelivered,
+    EventTypeMsgFailed,
     EventTypeWarning,
     MessageData,
     events,
@@ -33,6 +35,10 @@ def log_event(bot: Bot, _accid: int, event) -> None:
             bot.logger.error(event.msg)
 
 
+def is_sent(event: EventType, msgid: int) -> bool:
+    return isinstance(event, (EventTypeMsgDelivered, EventTypeMsgFailed)) and event.msg_id == msgid
+
+
 def send(_cli: BotCli, bot: Bot, args: Namespace) -> None:
     """send a message"""
     accid = bot.rpc.get_all_account_ids()[0]
@@ -44,10 +50,7 @@ def send(_cli: BotCli, bot: Bot, args: Namespace) -> None:
     bot.logger.info("sending message...")
     chatid = cli.get_admin_chat(bot.rpc, accid)
     msgid = bot.rpc.send_msg(accid, chatid, MessageData(text=args.text, file=args.file))
-    bot.run_until(
-        lambda ev: ev.event.kind in (EventType.MSG_DELIVERED, EventType.MSG_FAILED)
-        and ev.event.msg_id == msgid
-    )
+    bot.run_until(lambda ev: is_sent(ev.event, msgid))
     bot.logger.info("Done, message sent")
 
 

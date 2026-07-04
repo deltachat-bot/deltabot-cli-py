@@ -19,7 +19,7 @@ classifiers = [
   "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
 ]
 dependencies = [
-    "deltachat2[full]>=1.0.2",
+    "deltachat2[full]>=1.0.3",
     "appdirs>=1.4.4",
     "rich>=12.6.0",
 ]
@@ -31,7 +31,8 @@ Homepage = "https://github.com/deltachat-bot/deltabot-cli-py"
 dev = [
   "black",
   "isort",
-  "prospector[with-mypy]",
+  "mypy",
+  "pylint",
 ]
 docs = [
   "Sphinx>=9.1.0",
@@ -51,9 +52,20 @@ profile = "black"
 
 [tool.mypy]
 ignore_missing_imports = "True"
+exclude = [
+  'build/',
+]
 
-[tool.pylint]
-"messages control".disable = [
+[tool.pylint.main]
+ignore-paths = [
+  "build",
+  "docs",
+]
+ignore-patterns = [
+  "_version.py",
+]
+[tool.pylint."messages control"]
+disable = [
   "too-many-instance-attributes",
   "too-many-function-args",
 ]
